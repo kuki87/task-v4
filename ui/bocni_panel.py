@@ -126,6 +126,9 @@ class BocniPanel(ctk.CTkFrame):
         self._osvjezi_kosaricu()
 
     def _dodaj_artikal(self, naziv: str, cijena: float):
+        if self.smjena_id_getter() is None:
+            messagebox.showinfo("Info", "Nema otvorene smjene.")
+            return
         artikal = Artikal(naziv=naziv, cijena=cijena, kolicina=1)
         cilj = self.odabrani_cilj
 
@@ -209,6 +212,9 @@ class BocniPanel(ctk.CTkFrame):
         self._osvjezi_kosaricu()
 
     def _naplati_sank(self):
+        if self.smjena_id_getter() is None:
+            messagebox.showinfo("Info", "Nema otvorene smjene.")
+            return
         cilj = self.odabrani_cilj
         if cilj != "Šank":
             messagebox.showinfo("Info", "Prebaci se na Šank košaricu za naplatu.")
@@ -235,3 +241,5 @@ class BocniPanel(ctk.CTkFrame):
     def osvjezi(self, kartice):
         self.azuriraj_segment(kartice)
         self._osvjezi_kosaricu()
+        smjena_ok = self.smjena_id_getter() is not None
+        self.btn_naplati.configure(state="normal" if smjena_ok else "disabled")

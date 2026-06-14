@@ -41,9 +41,10 @@ class GlavniProzor:
 
     def _seed_uredjaje_ako_prazno(self):
         default_uredjaji = [
-            ("PC1", 2.0, "PC"), ("PC2", 2.0, "PC"), ("PC3", 2.0, "PC"),
-            ("PC4", 2.0, "PC"), ("PC5", 2.0, "PC"), ("PC6", 2.0, "PC"),
-            ("PS5-1", 3.0, "PS5"), ("PS5-2", 3.0, "PS5"),
+            ("PC1", 2.0, "PC", "Classic"), ("PC2", 2.0, "PC", "Classic"),
+            ("PC3", 2.0, "PC", "Classic"), ("PC4", 2.0, "PC", "Classic"),
+            ("PC5", 2.0, "PC", "Classic"), ("PC6", 2.0, "PC", "Classic"),
+            ("PS5-1", 3.0, "PS5", "PS5"), ("PS5-2", 3.0, "PS5", "PS5"),
         ]
         seed_uredjaje_ako_prazno(default_uredjaji)
 
@@ -152,26 +153,70 @@ class GlavniProzor:
         self.kartice.clear()
 
         from ui.kartica_uredjaja import UredjajKontroler
+        from collections import defaultdict
 
-        red_frame = None
-        for i, u in enumerate(ucitaj_uredjaje()):
-            if i % 6 == 0:
-                red_frame = ctk.CTkFrame(self.kartice_frame, fg_color="transparent")
-                red_frame.pack(anchor="w", pady=6, padx=10)
+        # Zone i redosljed prikaza
+        PC_GRUPE = ["Classic", "VIP", "Super VIP"]
+        sve = ucitaj_uredjaje()
 
-            kartica = UredjajKontroler(
-                red_frame,
-                ime=u["ime"],
-                tip=u["tip"],
-                cena=u["cena"],
-                smjena_id_getter=lambda: self.state.trenutna_smjena_id,
-                radnik_getter=lambda: self.state.ime_radnika,
-                log_callback=upisi_log,
-                pazar_callback=self._osvjezi_status_bar,
-                get_sve_uredjaje=lambda: self.kartice,
-            )
-            kartica.pack(side="left", padx=6)
-            self.kartice.append(kartica)
+        po_grupi: dict = defaultdict(list)
+        for u in sve:
+            po_grupi[u["grupa"]].append(u)
+
+        def _zona_header(tekst, boja="#1e1b4b"):
+            frame = ctk.CTkFrame(self.kartice_frame, fg_color=boja, corner_radius=6)
+            frame.pack(fill="x", padx=8, pady=(12, 2))
+            ctk.CTkLabel(
+                frame, text=tekst,
+                font=ctk.CTkFont(size=13, weight="bold"),
+                text_color="#a5b4fc"
+            ).pack(side="left", padx=12, pady=4)
+
+        def _grupa_header(tekst):
+            ctk.CTkLabel(
+                self.kartice_frame, text=f"  {tekst}",
+                font=ctk.CTkFont(size=11),
+                text_color="#6b7280"
+            ).pack(anchor="w", padx=16, pady=(6, 0))
+
+        def _dodaj_kartice(uredjaji_lista):
+            red_frame = ctk.CTkFrame(self.kartice_frame, fg_color="transparent")
+            red_frame.pack(anchor="w", pady=4, padx=16)
+            for u in uredjaji_lista:
+                kartica = UredjajKontroler(
+                    red_frame,
+                    ime=u["ime"],
+                    tip=u["tip"],
+                    cena=u["cena"],
+                    smjena_id_getter=lambda: self.state.trenutna_smjena_id,
+                    radnik_getter=lambda: self.state.ime_radnika,
+                    log_callback=upisi_log,
+                    pazar_callback=self._osvjezi_status_bar,
+                    get_sve_uredjaje=lambda: self.kartice,
+                )
+                kartica.pack(side="left", padx=6)
+                self.kartice.append(kartica)
+
+        # PC ZONA
+        pc_grupe_prisutne = [g for g in PC_GRUPE if po_grupi.get(g)]
+        if pc_grupe_prisutne:
+            _zona_header("⚡ PC ZONA")
+            for grupa in PC_GRUPE:
+                if po_grupi.get(grupa):
+                    _grupa_header(grupa)
+                    _dodaj_kartice(po_grupi[grupa])
+
+        # PS5 ZONA
+        if po_grupi.get("PS5"):
+            _zona_header("🎮 PS5 ZONA", boja="#1a1a2e")
+            _dodaj_kartice(po_grupi["PS5"])
+
+        # Ostale grupe (fallback za nepoznate)
+        poznate = set(PC_GRUPE) | {"PS5"}
+        for grupa, uredjaji in po_grupi.items():
+            if grupa not in poznate and uredjaji:
+                _zona_header(f"📌 {grupa}", boja="#1f2937")
+                _dodaj_kartice(uredjaji)
 
         if self.bocni_panel:
             self.bocni_panel.ucitaj_artikle()

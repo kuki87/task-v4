@@ -10,6 +10,7 @@ def kreiraj_tabele(conn: sqlite3.Connection):
             ime TEXT UNIQUE NOT NULL,
             cena REAL DEFAULT 2.0,
             tip TEXT DEFAULT 'PC',
+            grupa TEXT DEFAULT 'Classic',
             vreme_starta TEXT,
             limit_sekundi INTEGER,
             is_prepaid INTEGER DEFAULT 0,
@@ -110,6 +111,17 @@ def pokreni_migracije(conn: sqlite3.Connection):
         conn.commit()
     except Exception:
         pass
+
+    # Migracija: dodaj grupa kolonu ako ne postoji
+    try:
+        c.execute("ALTER TABLE uredjaji ADD COLUMN grupa TEXT DEFAULT 'Classic'")
+        conn.commit()
+    except Exception:
+        pass
+
+    # Migracija: ispravi PS5 uređaje koji su dobili grupu 'Classic' po defaultu
+    c.execute("UPDATE uredjaji SET grupa = 'PS5' WHERE tip = 'PS5' AND grupa = 'Classic'")
+    conn.commit()
 
     # Seed default artikli ako tabela prazna
     c.execute("SELECT COUNT(*) FROM artikli")

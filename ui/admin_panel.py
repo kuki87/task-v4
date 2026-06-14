@@ -2,33 +2,35 @@ import customtkinter as ctk
 from tkinter import messagebox, simpledialog
 from services.auth import provjeri_admin_lozinku, promijeni_lozinku
 from services.artikli import ucitaj_artikle, dodaj_artikal, uredi_artikal, brisi_artikal
-from services.uredjaji import ucitaj_uredjaje, dodaj_uredjaj, brisi_uredjaj, ucitaj_logove
+from services.uredjaji import ucitaj_uredjaje, dodaj_uredjaj, brisi_uredjaj, ucitaj_logove, postavi_cijenu_grupe
 
 
 class AdminPanel(ctk.CTkToplevel):
     def __init__(self, parent, reload_callback=None):
         super().__init__(parent)
+        self.withdraw()  # sakrij prozor dok se ne unese lozinka
         self.title("Admin Panel")
-        self.geometry("620x580")
-        self.grab_set()
-        self.lift()
-        self.focus_force()
+        self.geometry("700x660")
         self.reload_callback = reload_callback
 
         if not self._provjeri_lozinku():
             self.destroy()
             return
 
+        self.grab_set()
+        self.lift()
+        self.focus_force()
+        self.deiconify()  # prikaži tek nakon uspješne autentifikacije
         self._izgraduj_ui()
 
     def _provjeri_lozinku(self) -> bool:
         lozinka = simpledialog.askstring(
-            "Admin", "Unesite admin lozinku:", show="*", parent=self
+            "Admin", "Unesite admin lozinku:", show="*", parent=self.master
         )
         if lozinka is None:
             return False
         if not provjeri_admin_lozinku(lozinka):
-            messagebox.showerror("Greška", "Pogrešna lozinka!")
+            messagebox.showerror("Greška", "Pogrešna lozinka!", parent=self.master)
             return False
         return True
 
@@ -150,28 +152,86 @@ class AdminPanel(ctk.CTkToplevel):
         input_frame.pack(fill="x", pady=8, padx=8)
 
         ctk.CTkLabel(input_frame, text="Ime:").pack(side="left")
-        self.entry_urd_ime = ctk.CTkEntry(input_frame, width=100, placeholder_text="PC1")
+        self.entry_urd_ime = ctk.CTkEntry(input_frame, width=90, placeholder_text="PC")
         self.entry_urd_ime.pack(side="left", padx=4)
 
         ctk.CTkLabel(input_frame, text="KM/h:").pack(side="left")
-        self.entry_urd_cena = ctk.CTkEntry(input_frame, width=60, placeholder_text="2.0")
+        self.entry_urd_cena = ctk.CTkEntry(input_frame, width=55, placeholder_text="2.0")
         self.entry_urd_cena.pack(side="left", padx=4)
 
         ctk.CTkLabel(input_frame, text="Tip:").pack(side="left")
         self.var_tip = ctk.StringVar(value="PC")
-        ctk.CTkOptionMenu(input_frame, values=["PC", "PS5"],
-                           variable=self.var_tip, width=70).pack(side="left", padx=4)
+        ctk.CTkOptionMenu(
+            input_frame, values=["PC", "PS5"],
+            variable=self.var_tip, width=65,
+            command=self._on_tip_promjena
+        ).pack(side="left", padx=4)
 
-        ctk.CTkButton(input_frame, text="Dodaj", width=70,
+        ctk.CTkLabel(input_frame, text="Grupa:").pack(side="left")
+        self.var_grupa = ctk.StringVar(value="Classic")
+        self.menu_grupa = ctk.CTkOptionMenu(
+            input_frame, values=["Classic", "VIP", "Super VIP"],
+            variable=self.var_grupa, width=100
+        )
+        self.menu_grupa.pack(side="left", padx=4)
+
+        ctk.CTkLabel(input_frame, text="Količina:").pack(side="left")
+        self.entry_kolicina = ctk.CTkEntry(input_frame, width=45, placeholder_text="1")
+        self.entry_kolicina.pack(side="left", padx=4)
+
+        ctk.CTkButton(input_frame, text="Dodaj", width=65,
                        fg_color="#22c55e", hover_color="#16a34a",
                        command=self._dodaj_uredjaj).pack(side="left", padx=4)
 
-        self.scroll_uredjaji = ctk.CTkScrollableFrame(tab, height=300)
+        self.scroll_uredjaji = ctk.CTkScrollableFrame(tab, height=200)
         self.scroll_uredjaji.pack(padx=8, fill="both", expand=True)
 
-        ctk.CTkButton(tab, text="Osvježi", width=120,
-                       command=self._ucitaj_uredjaje).pack(pady=6)
+        ctk.CTkButton(tab, text="Osvježi listu", width=120,
+                       command=self._ucitaj_uredjaje).pack(pady=4)
+
+        # ---- Cijena po grupi ----
+        ctk.CTkLabel(tab, text="Postavi cijenu po grupi (KM/h)",
+                      font=ctk.CTkFont(size=12, weight="bold"),
+                      text_color="#9ca3af").pack(pady=(8, 2))
+
+        cijena_frame = ctk.CTkFrame(tab, fg_color="#1e1e2e", corner_radius=8)
+        cijena_frame.pack(fill="x", padx=8, pady=4)
+
+        self._entry_cijene: dict = {}
+        for grupa in ["Classic", "VIP", "Super VIP", "PS5"]:
+            red = ctk.CTkFrame(cijena_frame, fg_color="transparent")
+            red.pack(fill="x", padx=8, pady=3)
+            ctk.CTkLabel(red, text=grupa, width=90, anchor="w",
+                          font=ctk.CTkFont(size=12)).pack(side="left")
+            entry = ctk.CTkEntry(red, width=80, placeholder_text="—")
+            entry.pack(side="left", padx=6)
+            self._entry_cijene[grupa] = entry
+            ctk.CTkButton(
+                red, text="Sačuvaj", width=80, height=26,
+                fg_color="#22c55e", hover_color="#16a34a",
+                command=lambda g=grupa: self._postavi_cijenu_grupe(g)
+            ).pack(side="left", padx=4)
+
         self._ucitaj_uredjaje()
+
+    def _on_tip_promjena(self, vrijednost: str):
+        if vrijednost == "PS5":
+            self.var_grupa.set("PS5")
+            self.menu_grupa.configure(state="disabled")
+        else:
+            self.var_grupa.set("Classic")
+            self.menu_grupa.configure(state="normal")
+
+    def _osvjezi_cijene_grupe(self):
+        cijene: dict = {}
+        for u in ucitaj_uredjaje():
+            g = u["grupa"]
+            if g not in cijene:
+                cijene[g] = u["cena"]
+        for grupa, entry in self._entry_cijene.items():
+            entry.delete(0, "end")
+            if grupa in cijene:
+                entry.insert(0, f"{cijene[grupa]:.2f}")
 
     def _ucitaj_uredjaje(self):
         for w in self.scroll_uredjaji.winfo_children():
@@ -183,10 +243,12 @@ class AdminPanel(ctk.CTkToplevel):
 
             ctk.CTkLabel(red, text=u["ime"], width=80, anchor="w",
                           font=ctk.CTkFont(size=12)).pack(side="left", padx=8)
-            ctk.CTkLabel(red, text=f"{u['cena']:.2f} KM/h", width=90).pack(side="left")
+            ctk.CTkLabel(red, text=f"{u['cena']:.2f} KM/h", width=80).pack(side="left")
             tip_boja = "#6366f1" if u["tip"] == "PS5" else "#4f46e5"
-            ctk.CTkLabel(red, text=u["tip"], width=50,
+            ctk.CTkLabel(red, text=u["tip"], width=45,
                           text_color=tip_boja).pack(side="left")
+            ctk.CTkLabel(red, text=u["grupa"], width=80,
+                          text_color="#9ca3af", font=ctk.CTkFont(size=11)).pack(side="left")
 
             ctk.CTkButton(
                 red, text="Briši", width=60, height=26,
@@ -194,26 +256,68 @@ class AdminPanel(ctk.CTkToplevel):
                 command=lambda uid=u["id"]: self._brisi_uredjaj(uid)
             ).pack(side="right", padx=4)
 
+        self._osvjezi_cijene_grupe()
+
     def _dodaj_uredjaj(self):
-        ime = self.entry_urd_ime.get().strip()
+        base_ime = self.entry_urd_ime.get().strip()
         try:
             cena = float(self.entry_urd_cena.get().replace(",", "."))
         except ValueError:
             messagebox.showerror("Greška", "Nevalidna cijena!")
             return
+        try:
+            kolicina = max(1, int(self.entry_kolicina.get().strip() or "1"))
+        except ValueError:
+            messagebox.showerror("Greška", "Nevalidna količina!")
+            return
         tip = self.var_tip.get()
-        if not ime:
+        grupa = self.var_grupa.get()
+        if not base_ime:
             messagebox.showerror("Greška", "Unesite ime uređaja!")
             return
         try:
-            dodaj_uredjaj(ime, cena, tip)
+            if kolicina == 1:
+                dodaj_uredjaj(base_ime, cena, tip, grupa)
+            else:
+                import re
+                svi = ucitaj_uredjaje()
+                postojeci_imena = {u["ime"] for u in svi}
+                # Nastavi od globalnog max broja (svi PC uređaji dijele numeraciju)
+                svi_brojevi = [
+                    int(m.group(1))
+                    for u in svi
+                    if (m := re.search(r'(\d+)$', u["ime"]))
+                ]
+                sljedeci = (max(svi_brojevi) + 1) if svi_brojevi else 1
+                created = 0
+                while created < kolicina:
+                    kandidat = f"{base_ime}{sljedeci}"
+                    if kandidat not in postojeci_imena:
+                        dodaj_uredjaj(kandidat, cena, tip, grupa)
+                        postojeci_imena.add(kandidat)
+                        created += 1
+                    sljedeci += 1
             self.entry_urd_ime.delete(0, "end")
             self.entry_urd_cena.delete(0, "end")
+            self.entry_kolicina.delete(0, "end")
             self._ucitaj_uredjaje()
             if self.reload_callback:
                 self.reload_callback()
         except Exception as e:
-            messagebox.showerror("Greška", f"Uređaj već postoji: {e}")
+            messagebox.showerror("Greška", f"Greška pri dodavanju uređaja: {e}")
+
+    def _postavi_cijenu_grupe(self, grupa: str):
+        raw = self._entry_cijene[grupa].get().strip().replace(",", ".")
+        try:
+            cena = float(raw)
+        except ValueError:
+            messagebox.showerror("Greška", f"Nevalidna cijena za grupu {grupa}!")
+            return
+        azurirano = postavi_cijenu_grupe(grupa, cena)
+        messagebox.showinfo("OK", f"Ažurirano {azurirano} uređaja u grupi '{grupa}' → {cena:.2f} KM/h")
+        self._ucitaj_uredjaje()  # osvježava listu i cijene u poljima
+        if self.reload_callback:
+            self.reload_callback()
 
     def _brisi_uredjaj(self, uid: int):
         if not messagebox.askyesno("Potvrda", "Obrisati uređaj?"):

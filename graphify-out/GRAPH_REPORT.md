@@ -1,23 +1,25 @@
-# Graph Report - .  (2026-06-07)
+# Graph Report - .  (2026-06-14)
 
 ## Corpus Check
 - 26 files · ~7,200 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 226 nodes · 538 edges · 15 communities (14 shown, 1 thin omitted)
-- Extraction: 83% EXTRACTED · 17% INFERRED · 0% AMBIGUOUS · INFERRED: 89 edges (avg confidence: 0.56)
+- 231 nodes · 549 edges · 17 communities (16 shown, 1 thin omitted)
+- Extraction: 84% EXTRACTED · 16% INFERRED · 0% AMBIGUOUS · INFERRED: 90 edges (avg confidence: 0.56)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
-- [[_COMMUNITY_Core Data Access Layer|Core Data Access Layer]]
-- [[_COMMUNITY_Item & Pricing Model|Item & Pricing Model]]
-- [[_COMMUNITY_App State & Shift Logic|App State & Shift Logic]]
 - [[_COMMUNITY_Article & Device Services|Article & Device Services]]
+- [[_COMMUNITY_Session & Pazar Model|Session & Pazar Model]]
+- [[_COMMUNITY_Core Data Access Layer|Core Data Access Layer]]
 - [[_COMMUNITY_Session Start Dialog|Session Start Dialog]]
-- [[_COMMUNITY_Admin Panel UI|Admin Panel UI]]
-- [[_COMMUNITY_Session State Model|Session State Model]]
+- [[_COMMUNITY_App State & Main Window|App State & Main Window]]
+- [[_COMMUNITY_Entry Point & Logger|Entry Point & Logger]]
+- [[_COMMUNITY_Side Panel UI|Side Panel UI]]
+- [[_COMMUNITY_Admin Auth|Admin Auth]]
 - [[_COMMUNITY_Graphify Configuration|Graphify Configuration]]
+- [[_COMMUNITY_DB Schema & Init|DB Schema & Init]]
 - [[_COMMUNITY_Package Init Files|Package Init Files]]
 - [[_COMMUNITY_Claude Dev Settings|Claude Dev Settings]]
 
@@ -25,8 +27,8 @@
 1. `get_db()` - 45 edges
 2. `Artikal` - 32 edges
 3. `SessionState` - 31 edges
-4. `AdminPanel` - 24 edges
-5. `GlavniProzor` - 23 edges
+4. `AdminPanel` - 25 edges
+5. `GlavniProzor` - 24 edges
 6. `BocniPanel` - 19 edges
 7. `UredjajKontroler` - 18 edges
 8. `IzborStartaDijalog` - 17 edges
@@ -42,8 +44,8 @@
   database/db.py → models/app_state.py
 - `AppState` --uses--> `GlavniProzor`  [INFERRED]
   models/app_state.py → ui/glavni_prozor.py
-- `Artikal` --uses--> `BocniPanel`  [INFERRED]
-  models/artikal.py → ui/bocni_panel.py
+- `AppState` --uses--> `int`  [INFERRED]
+  models/app_state.py → ui/glavni_prozor.py
 
 ## Import Cycles
 - None detected.
@@ -53,58 +55,66 @@
 - **Admin Authentication Flow** — ui_admin_panel_AdminPanel, services_auth_provjeri_admin_lozinku, services_auth_promijeni_lozinku, services_auth_hash_lozinke, constants_ADMIN_DEFAULT_LOZINKA [EXTRACTED 1.00]
 - **Shift (Smjena) Lifecycle Flow** — services_smjena_otvori_smjenu, services_smjena_zatvori_smjenu, services_smjena_prenesi_u_novu_smjenu, ui_glavni_prozor_GlavniProzor, models_app_state_AppState [INFERRED 0.90]
 
-## Communities (15 total, 1 thin omitted)
+## Communities (17 total, 1 thin omitted)
 
-### Community 0 - "Core Data Access Layer"
-Cohesion: 0.11
-Nodes (24): DB_PATH Constant, get_db(), inicijalizuj_bazu(), Connection, kreiraj_tabele(), pokreni_migracije(), Connection, Application Entry Point (+16 more)
-
-### Community 1 - "Item & Pricing Model"
-Cohesion: 0.13
-Nodes (32): Pricing & Pass Constants, UI Color Constants, Artikal Dataclass, Artikal, float, str, SessionState Dataclass, SessionState (+24 more)
-
-### Community 2 - "App State & Shift Logic"
+### Community 0 - "Article & Device Services"
 Cohesion: 0.09
-Nodes (13): AppState, bool, int, str, BocniPanel, Artikal, float, str (+5 more)
+Nodes (22): bool, brisi_artikal(), dodaj_artikal(), float, int, str, ucitaj_artikle(), uredi_artikal() (+14 more)
 
-### Community 3 - "Article & Device Services"
-Cohesion: 0.12
-Nodes (23): Admin Default Password Constant, brisi_artikal(), dodaj_artikal(), float, int, str, ucitaj_artikle(), uredi_artikal() (+15 more)
+### Community 1 - "Session & Pazar Model"
+Cohesion: 0.13
+Nodes (25): Pricing & Pass Constants, UI Color Constants, Artikal Dataclass, SessionState Dataclass, bool, float, int, str (+17 more)
 
-### Community 4 - "Session Start Dialog"
+### Community 2 - "Core Data Access Layer"
+Cohesion: 0.14
+Nodes (27): DB_PATH Constant, get_db(), Connection, Application Entry Point, AppState (Singleton), Artikal, float, str (+19 more)
+
+### Community 3 - "Session Start Dialog"
 Cohesion: 0.13
 Nodes (8): IzborStartaDijalog, float, str, _DijalogIzbora, Artikal, float, str, UredjajKontroler
 
-### Community 5 - "Admin Panel UI"
-Cohesion: 0.16
-Nodes (6): bool, AdminPanel, bool, float, int, str
+### Community 4 - "App State & Main Window"
+Cohesion: 0.12
+Nodes (9): AppState, bool, int, str, str, _DijalogSmjena, _PrikazIzvjestaja, str (+1 more)
 
-### Community 6 - "Session State Model"
-Cohesion: 0.24
-Nodes (4): bool, float, int, str
+### Community 5 - "Entry Point & Logger"
+Cohesion: 0.17
+Nodes (5): int, str, upisi_log(), GlavniProzor, int
 
-### Community 7 - "Graphify Configuration"
+### Community 6 - "Side Panel UI"
+Cohesion: 0.26
+Nodes (4): BocniPanel, Artikal, float, str
+
+### Community 7 - "Admin Auth"
+Cohesion: 0.40
+Nodes (8): Admin Default Password Constant, hash_lozinke(), promijeni_lozinku(), provjeri_admin_lozinku(), provjeri_lozinku(), bool, str, AdminPanel UI
+
+### Community 8 - "Graphify Configuration"
 Cohesion: 0.25
 Nodes (8): graphify query Command, Graphify Usage Rules, graphify update Command, GRAPH_REPORT.md Broad Architecture Review, graphify-out/wiki/index.md Navigation, Bash Tool PreToolUse Hook, Claude Settings / PreToolUse Hooks, Graphify Knowledge Graph Hint (Hook Context)
 
-### Community 8 - "Package Init Files"
+### Community 9 - "DB Schema & Init"
+Cohesion: 0.52
+Nodes (5): Connection, inicijalizuj_bazu(), kreiraj_tabele(), pokreni_migracije(), Connection
+
+### Community 10 - "Package Init Files"
 Cohesion: 0.67
 Nodes (4): Database Package Init, Models Package Init, Services Package Init, UI Package Init
 
 ## Knowledge Gaps
-- **23 isolated node(s):** `PreToolUse`, `Connection`, `int`, `str`, `bool` (+18 more)
+- **24 isolated node(s):** `PreToolUse`, `Connection`, `int`, `str`, `bool` (+19 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `get_db()` connect `Core Data Access Layer` to `Item & Pricing Model`, `App State & Shift Logic`, `Article & Device Services`, `Session Start Dialog`, `Admin Panel UI`?**
-  _High betweenness centrality (0.275) - this node is a cross-community bridge._
-- **Why does `SessionState` connect `Item & Pricing Model` to `Core Data Access Layer`, `App State & Shift Logic`, `Session Start Dialog`, `Session State Model`?**
-  _High betweenness centrality (0.119) - this node is a cross-community bridge._
-- **Why does `Artikal` connect `Item & Pricing Model` to `Core Data Access Layer`, `App State & Shift Logic`, `Session Start Dialog`?**
-  _High betweenness centrality (0.114) - this node is a cross-community bridge._
+- **Why does `get_db()` connect `Core Data Access Layer` to `Article & Device Services`, `Session & Pazar Model`, `Session Start Dialog`, `Entry Point & Logger`, `Side Panel UI`, `Admin Auth`, `DB Schema & Init`?**
+  _High betweenness centrality (0.270) - this node is a cross-community bridge._
+- **Why does `SessionState` connect `Session & Pazar Model` to `Core Data Access Layer`, `Session Start Dialog`, `App State & Main Window`, `Entry Point & Logger`?**
+  _High betweenness centrality (0.118) - this node is a cross-community bridge._
+- **Why does `AdminPanel` connect `Article & Device Services` to `Core Data Access Layer`, `App State & Main Window`, `Entry Point & Logger`, `Admin Auth`?**
+  _High betweenness centrality (0.116) - this node is a cross-community bridge._
 - **Are the 24 inferred relationships involving `Artikal` (e.g. with `Artikal` and `float`) actually correct?**
   _`Artikal` has 24 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 20 inferred relationships involving `SessionState` (e.g. with `Artikal` and `float`) actually correct?**

@@ -56,7 +56,7 @@
       "file_type": "code",
       "source_file": "constants.py",
       "source_location": "L1",
-      "community": 10,
+      "community": 12,
       "norm_label": "constants.py",
       "id": "constants_py"
     },
@@ -65,7 +65,7 @@
       "file_type": "code",
       "source_file": "main.py",
       "source_location": "L1",
-      "community": 0,
+      "community": 5,
       "norm_label": "main.py",
       "id": "main_py"
     },
@@ -74,7 +74,7 @@
       "file_type": "code",
       "source_file": ".claude/settings.json",
       "source_location": "L1",
-      "community": 9,
+      "community": 11,
       "norm_label": "settings.json",
       "id": "claude_settings_json"
     },
@@ -83,7 +83,7 @@
       "file_type": "code",
       "source_file": ".claude/settings.json",
       "source_location": "L2",
-      "community": 9,
+      "community": 11,
       "norm_label": "hooks",
       "id": "claude_settings_hooks"
     },
@@ -92,7 +92,7 @@
       "file_type": "code",
       "source_file": ".claude/settings.json",
       "source_location": "L3",
-      "community": 9,
+      "community": 11,
       "norm_label": "pretooluse",
       "id": "claude_settings_hooks_pretooluse"
     },
@@ -101,7 +101,7 @@
       "file_type": "code",
       "source_file": "database/db.py",
       "source_location": "L1",
-      "community": 0,
+      "community": 9,
       "norm_label": "db.py",
       "id": "database_db_py"
     },
@@ -110,7 +110,7 @@
       "file_type": "code",
       "source_file": "database/db.py",
       "source_location": "L10",
-      "community": 0,
+      "community": 2,
       "norm_label": "get_db()",
       "id": "database_db_get_db"
     },
@@ -119,7 +119,7 @@
       "file_type": "code",
       "source_file": "database/db.py",
       "source_location": "L10",
-      "community": 0,
+      "community": 2,
       "norm_label": "connection",
       "id": "database_db_py_connection"
     },
@@ -128,7 +128,7 @@
       "file_type": "code",
       "source_file": "database/db.py",
       "source_location": "L22",
-      "community": 0,
+      "community": 9,
       "norm_label": "inicijalizuj_bazu()",
       "id": "database_db_inicijalizuj_bazu"
     },
@@ -137,7 +137,7 @@
       "file_type": "code",
       "source_file": "database/models.py",
       "source_location": "L1",
-      "community": 0,
+      "community": 9,
       "norm_label": "models.py",
       "id": "database_models_py"
     },
@@ -146,7 +146,7 @@
       "file_type": "code",
       "source_file": "database/models.py",
       "source_location": "L4",
-      "community": 0,
+      "community": 9,
       "norm_label": "kreiraj_tabele()",
       "id": "database_models_kreiraj_tabele"
     },
@@ -155,7 +155,7 @@
       "file_type": "code",
       "source_file": "database/models.py",
       "source_location": "L4",
-      "community": 0,
+      "community": 9,
       "norm_label": "connection",
       "id": "database_models_py_connection"
     },
@@ -163,8 +163,8 @@
       "label": "pokreni_migracije()",
       "file_type": "code",
       "source_file": "database/models.py",
-      "source_location": "L97",
-      "community": 0,
+      "source_location": "L98",
+      "community": 9,
       "norm_label": "pokreni_migracije()",
       "id": "database_models_pokreni_migracije"
     },
@@ -173,7 +173,7 @@
       "file_type": "code",
       "source_file": "database/__init__.py",
       "source_location": "L1",
-      "community": 11,
+      "community": 13,
       "norm_label": "__init__.py",
       "id": "database_init_py"
     },
@@ -182,7 +182,7 @@
       "file_type": "code",
       "source_file": "models/app_state.py",
       "source_location": "L1",
-      "community": 2,
+      "community": 4,
       "norm_label": "app_state.py",
       "id": "models_app_state_py"
     },
@@ -191,7 +191,7 @@
       "file_type": "code",
       "source_file": "models/app_state.py",
       "source_location": "L1",
-      "community": 2,
+      "community": 4,
       "norm_label": "appstate",
       "id": "models_app_state_appstate"
     },
@@ -200,7 +200,7 @@
       "file_type": "code",
       "source_file": "models/app_state.py",
       "source_location": "L4",
-      "community": 2,
+      "community": 4,
       "norm_label": ".__new__()",
       "id": "models_app_state_appstate_new"
     },
@@ -209,7 +209,7 @@
       "file_type": "code",
       "source_file": "models/app_state.py",
       "source_location": "L11",
-      "community": 2,
+      "community": 4,
       "norm_label": ".postavi_smjenu()",
       "id": "models_app_state_appstate_postavi_smjenu"
     },
@@ -218,7 +218,7 @@
       "file_type": "code",
       "source_file": "models/app_state.py",
       "source_location": "L11",
-      "community": 2,
+      "community": 4,
       "norm_label": "int",
       "id": "models_app_state_py_int"
     },
@@ -227,7 +227,7 @@
       "file_type": "code",
       "source_file": "models/app_state.py",
       "source_location": "L11",
-      "community": 2,
+      "community": 4,
       "norm_label": "str",
       "id": "models_app_state_py_str"
     },
@@ -236,7 +236,7 @@
       "file_type": "code",
       "source_file": "models/app_state.py",
       "source_location": "L15",
-      "community": 2,
+      "community": 4,
       "norm_label": ".zatvori_smjenu()",
       "id": "models_app_state_appstate_zatvori_smjenu"
     },
@@ -245,7 +245,7 @@
       "file_type": "code",
       "source_file": "models/app_state.py",
       "source_location": "L19",
-      "community": 2,
+      "community": 4,
       "norm_label": ".je_smjena_otvorena()",
       "id": "models_app_state_appstate_je_smjena_otvorena"
     },
@@ -254,7 +254,7 @@
       "file_type": "code",
       "source_file": "models/app_state.py",
       "source_location": "L19",
-      "community": 2,
+      "community": 4,
       "norm_label": "bool",
       "id": "models_app_state_py_bool"
     },
@@ -263,7 +263,7 @@
       "file_type": "code",
       "source_file": "models/artikal.py",
       "source_location": "L1",
-      "community": 1,
+      "community": 2,
       "norm_label": "artikal.py",
       "id": "models_artikal_py"
     },
@@ -272,7 +272,7 @@
       "file_type": "code",
       "source_file": "models/artikal.py",
       "source_location": "L5",
-      "community": 1,
+      "community": 2,
       "norm_label": "artikal",
       "id": "models_artikal_artikal"
     },
@@ -281,7 +281,7 @@
       "file_type": "code",
       "source_file": "models/artikal.py",
       "source_location": "L10",
-      "community": 1,
+      "community": 2,
       "norm_label": ".ukupno()",
       "id": "models_artikal_artikal_ukupno"
     },
@@ -290,7 +290,7 @@
       "file_type": "code",
       "source_file": "models/artikal.py",
       "source_location": "L10",
-      "community": 1,
+      "community": 2,
       "norm_label": "float",
       "id": "models_artikal_py_float"
     },
@@ -299,7 +299,7 @@
       "file_type": "code",
       "source_file": "models/artikal.py",
       "source_location": "L13",
-      "community": 1,
+      "community": 2,
       "norm_label": ".__str__()",
       "id": "models_artikal_artikal_str"
     },
@@ -308,7 +308,7 @@
       "file_type": "code",
       "source_file": "models/artikal.py",
       "source_location": "L13",
-      "community": 1,
+      "community": 2,
       "norm_label": "str",
       "id": "models_artikal_py_str"
     },
@@ -335,7 +335,7 @@
       "file_type": "code",
       "source_file": "models/session_state.py",
       "source_location": "L17",
-      "community": 6,
+      "community": 1,
       "norm_label": ".elapsed_sekundi()",
       "id": "models_session_state_sessionstate_elapsed_sekundi"
     },
@@ -344,7 +344,7 @@
       "file_type": "code",
       "source_file": "models/session_state.py",
       "source_location": "L17",
-      "community": 6,
+      "community": 1,
       "norm_label": "int",
       "id": "models_session_state_py_int"
     },
@@ -353,7 +353,7 @@
       "file_type": "code",
       "source_file": "models/session_state.py",
       "source_location": "L21",
-      "community": 6,
+      "community": 1,
       "norm_label": ".preostalo_sekundi()",
       "id": "models_session_state_sessionstate_preostalo_sekundi"
     },
@@ -362,7 +362,7 @@
       "file_type": "code",
       "source_file": "models/session_state.py",
       "source_location": "L27",
-      "community": 6,
+      "community": 1,
       "norm_label": ".je_istekao()",
       "id": "models_session_state_sessionstate_je_istekao"
     },
@@ -371,7 +371,7 @@
       "file_type": "code",
       "source_file": "models/session_state.py",
       "source_location": "L27",
-      "community": 6,
+      "community": 1,
       "norm_label": "bool",
       "id": "models_session_state_py_bool"
     },
@@ -380,7 +380,7 @@
       "file_type": "code",
       "source_file": "models/session_state.py",
       "source_location": "L32",
-      "community": 6,
+      "community": 1,
       "norm_label": ".formatiraj_timer()",
       "id": "models_session_state_sessionstate_formatiraj_timer"
     },
@@ -389,7 +389,7 @@
       "file_type": "code",
       "source_file": "models/session_state.py",
       "source_location": "L32",
-      "community": 6,
+      "community": 1,
       "norm_label": "str",
       "id": "models_session_state_py_str"
     },
@@ -398,7 +398,7 @@
       "file_type": "code",
       "source_file": "models/session_state.py",
       "source_location": "L41",
-      "community": 6,
+      "community": 1,
       "norm_label": ".formatiraj_preostalo()",
       "id": "models_session_state_sessionstate_formatiraj_preostalo"
     },
@@ -407,7 +407,7 @@
       "file_type": "code",
       "source_file": "models/session_state.py",
       "source_location": "L52",
-      "community": 6,
+      "community": 1,
       "norm_label": ".progres_prepaid()",
       "id": "models_session_state_sessionstate_progres_prepaid"
     },
@@ -416,7 +416,7 @@
       "file_type": "code",
       "source_file": "models/session_state.py",
       "source_location": "L52",
-      "community": 6,
+      "community": 1,
       "norm_label": "float",
       "id": "models_session_state_py_float"
     },
@@ -425,7 +425,7 @@
       "file_type": "code",
       "source_file": "models/__init__.py",
       "source_location": "L1",
-      "community": 12,
+      "community": 14,
       "norm_label": "__init__.py",
       "id": "models_init_py"
     },
@@ -434,7 +434,7 @@
       "file_type": "code",
       "source_file": "services/auth.py",
       "source_location": "L1",
-      "community": 3,
+      "community": 7,
       "norm_label": "auth.py",
       "id": "services_auth_py"
     },
@@ -443,7 +443,7 @@
       "file_type": "code",
       "source_file": "services/auth.py",
       "source_location": "L7",
-      "community": 3,
+      "community": 7,
       "norm_label": "hash_lozinke()",
       "id": "services_auth_hash_lozinke"
     },
@@ -452,7 +452,7 @@
       "file_type": "code",
       "source_file": "services/auth.py",
       "source_location": "L7",
-      "community": 3,
+      "community": 7,
       "norm_label": "str",
       "id": "services_auth_py_str"
     },
@@ -461,7 +461,7 @@
       "file_type": "code",
       "source_file": "services/auth.py",
       "source_location": "L12",
-      "community": 3,
+      "community": 7,
       "norm_label": "provjeri_lozinku()",
       "id": "services_auth_provjeri_lozinku"
     },
@@ -470,7 +470,7 @@
       "file_type": "code",
       "source_file": "services/auth.py",
       "source_location": "L12",
-      "community": 3,
+      "community": 7,
       "norm_label": "bool",
       "id": "services_auth_py_bool"
     },
@@ -479,7 +479,7 @@
       "file_type": "code",
       "source_file": "services/auth.py",
       "source_location": "L16",
-      "community": 3,
+      "community": 7,
       "norm_label": "promijeni_lozinku()",
       "id": "services_auth_promijeni_lozinku"
     },
@@ -488,7 +488,7 @@
       "file_type": "code",
       "source_file": "services/auth.py",
       "source_location": "L31",
-      "community": 3,
+      "community": 7,
       "norm_label": "provjeri_admin_lozinku()",
       "id": "services_auth_provjeri_admin_lozinku"
     },
@@ -497,7 +497,7 @@
       "file_type": "code",
       "source_file": "services/izvjestaj.py",
       "source_location": "L1",
-      "community": 0,
+      "community": 2,
       "norm_label": "izvjestaj.py",
       "id": "services_izvjestaj_py"
     },
@@ -506,7 +506,7 @@
       "file_type": "code",
       "source_file": "services/izvjestaj.py",
       "source_location": "L6",
-      "community": 0,
+      "community": 2,
       "norm_label": "generisi_tekstualni()",
       "id": "services_izvjestaj_generi\u0161i_tekstualni"
     },
@@ -515,7 +515,7 @@
       "file_type": "code",
       "source_file": "services/izvjestaj.py",
       "source_location": "L6",
-      "community": 0,
+      "community": 2,
       "norm_label": "int",
       "id": "services_izvjestaj_py_int"
     },
@@ -524,7 +524,7 @@
       "file_type": "code",
       "source_file": "services/izvjestaj.py",
       "source_location": "L6",
-      "community": 0,
+      "community": 2,
       "norm_label": "str",
       "id": "services_izvjestaj_py_str"
     },
@@ -533,7 +533,7 @@
       "file_type": "code",
       "source_file": "services/izvjestaj.py",
       "source_location": "L70",
-      "community": 0,
+      "community": 2,
       "norm_label": "generisi_pdf()",
       "id": "services_izvjestaj_generi\u0161i_pdf"
     },
@@ -542,7 +542,7 @@
       "file_type": "code",
       "source_file": "services/logger.py",
       "source_location": "L1",
-      "community": 0,
+      "community": 5,
       "norm_label": "logger.py",
       "id": "services_logger_py"
     },
@@ -551,7 +551,7 @@
       "file_type": "code",
       "source_file": "services/logger.py",
       "source_location": "L16",
-      "community": 0,
+      "community": 5,
       "norm_label": "upisi_log()",
       "id": "services_logger_upisi_log"
     },
@@ -560,7 +560,7 @@
       "file_type": "code",
       "source_file": "services/logger.py",
       "source_location": "L16",
-      "community": 0,
+      "community": 5,
       "norm_label": "str",
       "id": "services_logger_py_str"
     },
@@ -569,7 +569,7 @@
       "file_type": "code",
       "source_file": "services/logger.py",
       "source_location": "L29",
-      "community": 0,
+      "community": 5,
       "norm_label": "_global_exception_handler()",
       "id": "services_logger_global_exception_handler"
     },
@@ -659,7 +659,7 @@
       "file_type": "code",
       "source_file": "services/pazar.py",
       "source_location": "L99",
-      "community": 0,
+      "community": 2,
       "norm_label": "dohvati_pazar_smjene()",
       "id": "services_pazar_dohvati_pazar_smjene"
     },
@@ -686,7 +686,7 @@
       "file_type": "code",
       "source_file": "services/smjena.py",
       "source_location": "L1",
-      "community": 1,
+      "community": 2,
       "norm_label": "smjena.py",
       "id": "services_smjena_py"
     },
@@ -695,7 +695,7 @@
       "file_type": "code",
       "source_file": "services/smjena.py",
       "source_location": "L9",
-      "community": 0,
+      "community": 2,
       "norm_label": "otvori_smjenu()",
       "id": "services_smjena_otvori_smjenu"
     },
@@ -704,7 +704,7 @@
       "file_type": "code",
       "source_file": "services/smjena.py",
       "source_location": "L9",
-      "community": 1,
+      "community": 2,
       "norm_label": "str",
       "id": "services_smjena_py_str"
     },
@@ -713,7 +713,7 @@
       "file_type": "code",
       "source_file": "services/smjena.py",
       "source_location": "L9",
-      "community": 1,
+      "community": 2,
       "norm_label": "int",
       "id": "services_smjena_py_int"
     },
@@ -722,7 +722,7 @@
       "file_type": "code",
       "source_file": "services/smjena.py",
       "source_location": "L20",
-      "community": 1,
+      "community": 2,
       "norm_label": "zatvori_smjenu()",
       "id": "services_smjena_zatvori_smjenu"
     },
@@ -731,7 +731,7 @@
       "file_type": "code",
       "source_file": "services/smjena.py",
       "source_location": "L20",
-      "community": 1,
+      "community": 2,
       "norm_label": "sessionstate",
       "id": "services_smjena_py_sessionstate"
     },
@@ -740,7 +740,7 @@
       "file_type": "code",
       "source_file": "services/smjena.py",
       "source_location": "L20",
-      "community": 1,
+      "community": 2,
       "norm_label": "artikal",
       "id": "services_smjena_py_artikal"
     },
@@ -749,7 +749,7 @@
       "file_type": "code",
       "source_file": "services/smjena.py",
       "source_location": "L20",
-      "community": 1,
+      "community": 2,
       "norm_label": "float",
       "id": "services_smjena_py_float"
     },
@@ -758,7 +758,7 @@
       "file_type": "code",
       "source_file": "services/smjena.py",
       "source_location": "L44",
-      "community": 1,
+      "community": 2,
       "norm_label": "prenesi_u_novu_smjenu()",
       "id": "services_smjena_prenesi_u_novu_smjenu"
     },
@@ -767,7 +767,7 @@
       "file_type": "code",
       "source_file": "services/smjena.py",
       "source_location": "L73",
-      "community": 0,
+      "community": 2,
       "norm_label": "dohvati_aktivnu_smjenu()",
       "id": "services_smjena_dohvati_aktivnu_smjenu"
     },
@@ -776,7 +776,7 @@
       "file_type": "code",
       "source_file": "services/smjena.py",
       "source_location": "L83",
-      "community": 1,
+      "community": 2,
       "norm_label": "dohvati_smjenu_po_id()",
       "id": "services_smjena_dohvati_smjenu_po_id"
     },
@@ -785,7 +785,7 @@
       "file_type": "code",
       "source_file": "services/__init__.py",
       "source_location": "L1",
-      "community": 13,
+      "community": 15,
       "norm_label": "__init__.py",
       "id": "services_init_py"
     },
@@ -794,7 +794,7 @@
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L1",
-      "community": 3,
+      "community": 0,
       "norm_label": "admin_panel.py",
       "id": "ui_admin_panel_py"
     },
@@ -803,7 +803,7 @@
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L8",
-      "community": 5,
+      "community": 0,
       "norm_label": "adminpanel",
       "id": "ui_admin_panel_adminpanel"
     },
@@ -812,7 +812,7 @@
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L9",
-      "community": 5,
+      "community": 0,
       "norm_label": ".__init__()",
       "id": "ui_admin_panel_adminpanel_init"
     },
@@ -821,7 +821,7 @@
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L24",
-      "community": 5,
+      "community": 0,
       "norm_label": "._provjeri_lozinku()",
       "id": "ui_admin_panel_adminpanel_provjeri_lozinku"
     },
@@ -830,7 +830,7 @@
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L23",
-      "community": 5,
+      "community": 0,
       "norm_label": "bool",
       "id": "ui_admin_panel_py_bool"
     },
@@ -839,7 +839,7 @@
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L35",
-      "community": 5,
+      "community": 0,
       "norm_label": "._izgraduj_ui()",
       "id": "ui_admin_panel_adminpanel_izgraduj_ui"
     },
@@ -848,7 +848,7 @@
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L51",
-      "community": 5,
+      "community": 0,
       "norm_label": "._tab_artikli()",
       "id": "ui_admin_panel_adminpanel_tab_artikli"
     },
@@ -857,7 +857,7 @@
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L79",
-      "community": 5,
+      "community": 0,
       "norm_label": "._ucitaj_artikle()",
       "id": "ui_admin_panel_adminpanel_ucitaj_artikle"
     },
@@ -866,7 +866,7 @@
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L104",
-      "community": 5,
+      "community": 0,
       "norm_label": "._dodaj_artikal()",
       "id": "ui_admin_panel_adminpanel_dodaj_artikal"
     },
@@ -875,7 +875,7 @@
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L124",
-      "community": 5,
+      "community": 0,
       "norm_label": "._uredi_artikal()",
       "id": "ui_admin_panel_adminpanel_uredi_artikal"
     },
@@ -884,7 +884,7 @@
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L124",
-      "community": 5,
+      "community": 0,
       "norm_label": "int",
       "id": "ui_admin_panel_py_int"
     },
@@ -893,7 +893,7 @@
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L124",
-      "community": 5,
+      "community": 0,
       "norm_label": "str",
       "id": "ui_admin_panel_py_str"
     },
@@ -902,7 +902,7 @@
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L124",
-      "community": 5,
+      "community": 0,
       "norm_label": "float",
       "id": "ui_admin_panel_py_float"
     },
@@ -911,7 +911,7 @@
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L136",
-      "community": 5,
+      "community": 0,
       "norm_label": "._brisi_artikal()",
       "id": "ui_admin_panel_adminpanel_brisi_artikal"
     },
@@ -920,7 +920,7 @@
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L146",
-      "community": 5,
+      "community": 0,
       "norm_label": "._tab_uredjaji()",
       "id": "ui_admin_panel_adminpanel_tab_uredjaji"
     },
@@ -928,8 +928,8 @@
       "label": "._ucitaj_uredjaje()",
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L176",
-      "community": 5,
+      "source_location": "L199",
+      "community": 0,
       "norm_label": "._ucitaj_uredjaje()",
       "id": "ui_admin_panel_adminpanel_ucitaj_uredjaje"
     },
@@ -937,8 +937,8 @@
       "label": "._dodaj_uredjaj()",
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L197",
-      "community": 5,
+      "source_location": "L222",
+      "community": 0,
       "norm_label": "._dodaj_uredjaj()",
       "id": "ui_admin_panel_adminpanel_dodaj_uredjaj"
     },
@@ -946,8 +946,8 @@
       "label": "._brisi_uredjaj()",
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L218",
-      "community": 5,
+      "source_location": "L261",
+      "community": 0,
       "norm_label": "._brisi_uredjaj()",
       "id": "ui_admin_panel_adminpanel_brisi_uredjaj"
     },
@@ -955,8 +955,8 @@
       "label": "._tab_logovi()",
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L228",
-      "community": 5,
+      "source_location": "L271",
+      "community": 0,
       "norm_label": "._tab_logovi()",
       "id": "ui_admin_panel_adminpanel_tab_logovi"
     },
@@ -964,8 +964,8 @@
       "label": "._ucitaj_logove()",
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L248",
-      "community": 5,
+      "source_location": "L291",
+      "community": 0,
       "norm_label": "._ucitaj_logove()",
       "id": "ui_admin_panel_adminpanel_ucitaj_logove"
     },
@@ -973,8 +973,8 @@
       "label": "._tab_lozinka()",
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L260",
-      "community": 5,
+      "source_location": "L303",
+      "community": 0,
       "norm_label": "._tab_lozinka()",
       "id": "ui_admin_panel_adminpanel_tab_lozinka"
     },
@@ -982,8 +982,8 @@
       "label": "._promijeni_lozinku()",
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L283",
-      "community": 3,
+      "source_location": "L326",
+      "community": 7,
       "norm_label": "._promijeni_lozinku()",
       "id": "ui_admin_panel_adminpanel_promijeni_lozinku"
     },
@@ -992,7 +992,7 @@
       "file_type": "code",
       "source_file": "ui/bocni_panel.py",
       "source_location": "L1",
-      "community": 1,
+      "community": 0,
       "norm_label": "bocni_panel.py",
       "id": "ui_bocni_panel_py"
     },
@@ -1001,7 +1001,7 @@
       "file_type": "code",
       "source_file": "ui/bocni_panel.py",
       "source_location": "L8",
-      "community": 2,
+      "community": 6,
       "norm_label": "bocnipanel",
       "id": "ui_bocni_panel_bocnipanel"
     },
@@ -1010,7 +1010,7 @@
       "file_type": "code",
       "source_file": "ui/bocni_panel.py",
       "source_location": "L9",
-      "community": 2,
+      "community": 6,
       "norm_label": ".__init__()",
       "id": "ui_bocni_panel_bocnipanel_init"
     },
@@ -1019,7 +1019,7 @@
       "file_type": "code",
       "source_file": "ui/bocni_panel.py",
       "source_location": "L32",
-      "community": 2,
+      "community": 6,
       "norm_label": "._izgraduj_ui()",
       "id": "ui_bocni_panel_bocnipanel_izgraduj_ui"
     },
@@ -1028,7 +1028,7 @@
       "file_type": "code",
       "source_file": "ui/bocni_panel.py",
       "source_location": "L87",
-      "community": 2,
+      "community": 6,
       "norm_label": ".ucitaj_artikle()",
       "id": "ui_bocni_panel_bocnipanel_ucitaj_artikle"
     },
@@ -1037,7 +1037,7 @@
       "file_type": "code",
       "source_file": "ui/bocni_panel.py",
       "source_location": "L117",
-      "community": 2,
+      "community": 6,
       "norm_label": ".azuriraj_segment()",
       "id": "ui_bocni_panel_bocnipanel_azuriraj_segment"
     },
@@ -1046,7 +1046,7 @@
       "file_type": "code",
       "source_file": "ui/bocni_panel.py",
       "source_location": "L124",
-      "community": 2,
+      "community": 6,
       "norm_label": "._promijeni_cilj()",
       "id": "ui_bocni_panel_bocnipanel_promijeni_cilj"
     },
@@ -1055,7 +1055,7 @@
       "file_type": "code",
       "source_file": "ui/bocni_panel.py",
       "source_location": "L124",
-      "community": 2,
+      "community": 6,
       "norm_label": "str",
       "id": "ui_bocni_panel_py_str"
     },
@@ -1064,7 +1064,7 @@
       "file_type": "code",
       "source_file": "ui/bocni_panel.py",
       "source_location": "L128",
-      "community": 2,
+      "community": 6,
       "norm_label": "._dodaj_artikal()",
       "id": "ui_bocni_panel_bocnipanel_dodaj_artikal"
     },
@@ -1073,7 +1073,7 @@
       "file_type": "code",
       "source_file": "ui/bocni_panel.py",
       "source_location": "L128",
-      "community": 2,
+      "community": 6,
       "norm_label": "float",
       "id": "ui_bocni_panel_py_float"
     },
@@ -1081,8 +1081,8 @@
       "label": "._osvjezi_kosaricu()",
       "file_type": "code",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L151",
-      "community": 2,
+      "source_location": "L154",
+      "community": 6,
       "norm_label": "._osvjezi_kosaricu()",
       "id": "ui_bocni_panel_bocnipanel_osvjezi_kosaricu"
     },
@@ -1090,8 +1090,8 @@
       "label": "._ukloni_artikal()",
       "file_type": "code",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L194",
-      "community": 2,
+      "source_location": "L197",
+      "community": 6,
       "norm_label": "._ukloni_artikal()",
       "id": "ui_bocni_panel_bocnipanel_ukloni_artikal"
     },
@@ -1099,8 +1099,8 @@
       "label": "Artikal",
       "file_type": "code",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L194",
-      "community": 2,
+      "source_location": "L197",
+      "community": 6,
       "norm_label": "artikal",
       "id": "ui_bocni_panel_py_artikal"
     },
@@ -1108,8 +1108,8 @@
       "label": "._naplati_sank()",
       "file_type": "code",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L211",
-      "community": 2,
+      "source_location": "L214",
+      "community": 6,
       "norm_label": "._naplati_sank()",
       "id": "ui_bocni_panel_bocnipanel_naplati_sank"
     },
@@ -1117,8 +1117,8 @@
       "label": ".osvjezi()",
       "file_type": "code",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L235",
-      "community": 2,
+      "source_location": "L241",
+      "community": 6,
       "norm_label": ".osvjezi()",
       "id": "ui_bocni_panel_bocnipanel_osvjezi"
     },
@@ -1127,7 +1127,7 @@
       "file_type": "code",
       "source_file": "ui/dijalog_start.py",
       "source_location": "L1",
-      "community": 4,
+      "community": 3,
       "norm_label": "dijalog_start.py",
       "id": "ui_dijalog_start_py"
     },
@@ -1136,7 +1136,7 @@
       "file_type": "code",
       "source_file": "ui/dijalog_start.py",
       "source_location": "L11",
-      "community": 4,
+      "community": 3,
       "norm_label": "izborstartadijalog",
       "id": "ui_dijalog_start_izborstartadijalog"
     },
@@ -1145,7 +1145,7 @@
       "file_type": "code",
       "source_file": "ui/dijalog_start.py",
       "source_location": "L12",
-      "community": 4,
+      "community": 3,
       "norm_label": ".__init__()",
       "id": "ui_dijalog_start_izborstartadijalog_init"
     },
@@ -1154,7 +1154,7 @@
       "file_type": "code",
       "source_file": "ui/dijalog_start.py",
       "source_location": "L12",
-      "community": 4,
+      "community": 3,
       "norm_label": "str",
       "id": "ui_dijalog_start_py_str"
     },
@@ -1163,7 +1163,7 @@
       "file_type": "code",
       "source_file": "ui/dijalog_start.py",
       "source_location": "L12",
-      "community": 4,
+      "community": 3,
       "norm_label": "float",
       "id": "ui_dijalog_start_py_float"
     },
@@ -1172,7 +1172,7 @@
       "file_type": "code",
       "source_file": "ui/dijalog_start.py",
       "source_location": "L29",
-      "community": 4,
+      "community": 3,
       "norm_label": "._izgraduj_ui()",
       "id": "ui_dijalog_start_izborstartadijalog_izgraduj_ui"
     },
@@ -1181,7 +1181,7 @@
       "file_type": "code",
       "source_file": "ui/dijalog_start.py",
       "source_location": "L68",
-      "community": 4,
+      "community": 3,
       "norm_label": "._tab_neograniceno()",
       "id": "ui_dijalog_start_izborstartadijalog_tab_neograniceno"
     },
@@ -1190,7 +1190,7 @@
       "file_type": "code",
       "source_file": "ui/dijalog_start.py",
       "source_location": "L77",
-      "community": 4,
+      "community": 3,
       "norm_label": "._tab_unaprijed()",
       "id": "ui_dijalog_start_izborstartadijalog_tab_unaprijed"
     },
@@ -1199,7 +1199,7 @@
       "file_type": "code",
       "source_file": "ui/dijalog_start.py",
       "source_location": "L87",
-      "community": 4,
+      "community": 3,
       "norm_label": "._tab_pass1()",
       "id": "ui_dijalog_start_izborstartadijalog_tab_pass1"
     },
@@ -1208,7 +1208,7 @@
       "file_type": "code",
       "source_file": "ui/dijalog_start.py",
       "source_location": "L102",
-      "community": 4,
+      "community": 3,
       "norm_label": "._tab_pass2()",
       "id": "ui_dijalog_start_izborstartadijalog_tab_pass2"
     },
@@ -1217,7 +1217,7 @@
       "file_type": "code",
       "source_file": "ui/dijalog_start.py",
       "source_location": "L117",
-      "community": 4,
+      "community": 3,
       "norm_label": "._tab_minecraft()",
       "id": "ui_dijalog_start_izborstartadijalog_tab_minecraft"
     },
@@ -1226,7 +1226,7 @@
       "file_type": "code",
       "source_file": "ui/dijalog_start.py",
       "source_location": "L131",
-      "community": 4,
+      "community": 3,
       "norm_label": "._potvrdi()",
       "id": "ui_dijalog_start_izborstartadijalog_potvrdi"
     },
@@ -1235,7 +1235,7 @@
       "file_type": "code",
       "source_file": "ui/dijalog_start.py",
       "source_location": "L169",
-      "community": 4,
+      "community": 3,
       "norm_label": "._otkazi()",
       "id": "ui_dijalog_start_izborstartadijalog_otkazi"
     },
@@ -1244,7 +1244,7 @@
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
       "source_location": "L1",
-      "community": 0,
+      "community": 2,
       "norm_label": "glavni_prozor.py",
       "id": "ui_glavni_prozor_py"
     },
@@ -1252,8 +1252,8 @@
       "label": "GlavniProzor",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L25",
-      "community": 0,
+      "source_location": "L24",
+      "community": 5,
       "norm_label": "glavniprozor",
       "id": "ui_glavni_prozor_glavniprozor"
     },
@@ -1261,8 +1261,8 @@
       "label": ".__init__()",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L26",
-      "community": 0,
+      "source_location": "L25",
+      "community": 5,
       "norm_label": ".__init__()",
       "id": "ui_glavni_prozor_glavniprozor_init"
     },
@@ -1270,8 +1270,8 @@
       "label": "._seed_uredjaje_ako_prazno()",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L43",
-      "community": 0,
+      "source_location": "L42",
+      "community": 5,
       "norm_label": "._seed_uredjaje_ako_prazno()",
       "id": "ui_glavni_prozor_glavniprozor_seed_uredjaje_ako_prazno"
     },
@@ -1280,7 +1280,7 @@
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
       "source_location": "L51",
-      "community": 0,
+      "community": 5,
       "norm_label": "._izgraduj_ui()",
       "id": "ui_glavni_prozor_glavniprozor_izgraduj_ui"
     },
@@ -1289,7 +1289,7 @@
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
       "source_location": "L104",
-      "community": 0,
+      "community": 5,
       "norm_label": "._provjeri_smjenu()",
       "id": "ui_glavni_prozor_glavniprozor_provjeri_smjenu"
     },
@@ -1297,8 +1297,8 @@
       "label": "._obnovi_aktivne_sesije()",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L121",
-      "community": 0,
+      "source_location": "L118",
+      "community": 5,
       "norm_label": "._obnovi_aktivne_sesije()",
       "id": "ui_glavni_prozor_glavniprozor_obnovi_aktivne_sesije"
     },
@@ -1306,8 +1306,8 @@
       "label": "int",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L121",
-      "community": 2,
+      "source_location": "L118",
+      "community": 5,
       "norm_label": "int",
       "id": "ui_glavni_prozor_py_int"
     },
@@ -1315,8 +1315,8 @@
       "label": "._otvori_smjenu_dijalog()",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L139",
-      "community": 0,
+      "source_location": "L136",
+      "community": 5,
       "norm_label": "._otvori_smjenu_dijalog()",
       "id": "ui_glavni_prozor_glavniprozor_otvori_smjenu_dijalog"
     },
@@ -1324,8 +1324,8 @@
       "label": "._ucitaj_uredjaje()",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L154",
-      "community": 0,
+      "source_location": "L150",
+      "community": 5,
       "norm_label": "._ucitaj_uredjaje()",
       "id": "ui_glavni_prozor_glavniprozor_ucitaj_uredjaje"
     },
@@ -1333,8 +1333,8 @@
       "label": "._timer_loop()",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L187",
-      "community": 0,
+      "source_location": "L227",
+      "community": 5,
       "norm_label": "._timer_loop()",
       "id": "ui_glavni_prozor_glavniprozor_timer_loop"
     },
@@ -1342,8 +1342,8 @@
       "label": "._osvjezi_status_bar()",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L194",
-      "community": 0,
+      "source_location": "L234",
+      "community": 5,
       "norm_label": "._osvjezi_status_bar()",
       "id": "ui_glavni_prozor_glavniprozor_osvjezi_status_bar"
     },
@@ -1351,8 +1351,8 @@
       "label": "._meni_smjena()",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L206",
-      "community": 0,
+      "source_location": "L246",
+      "community": 5,
       "norm_label": "._meni_smjena()",
       "id": "ui_glavni_prozor_glavniprozor_meni_smjena"
     },
@@ -1360,8 +1360,8 @@
       "label": "._zatvori_smjenu()",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L213",
-      "community": 0,
+      "source_location": "L253",
+      "community": 5,
       "norm_label": "._zatvori_smjenu()",
       "id": "ui_glavni_prozor_glavniprozor_zatvori_smjenu"
     },
@@ -1369,8 +1369,8 @@
       "label": "._otvori_pazar()",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L279",
-      "community": 2,
+      "source_location": "L301",
+      "community": 4,
       "norm_label": "._otvori_pazar()",
       "id": "ui_glavni_prozor_glavniprozor_otvori_pazar"
     },
@@ -1378,8 +1378,8 @@
       "label": "._otvori_admin()",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L289",
-      "community": 5,
+      "source_location": "L311",
+      "community": 0,
       "norm_label": "._otvori_admin()",
       "id": "ui_glavni_prozor_glavniprozor_otvori_admin"
     },
@@ -1387,8 +1387,8 @@
       "label": ".run()",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L293",
-      "community": 0,
+      "source_location": "L315",
+      "community": 5,
       "norm_label": ".run()",
       "id": "ui_glavni_prozor_glavniprozor_run"
     },
@@ -1396,8 +1396,8 @@
       "label": "_DijalogSmjena",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L297",
-      "community": 2,
+      "source_location": "L319",
+      "community": 4,
       "norm_label": "_dijalogsmjena",
       "id": "ui_glavni_prozor_dijalogsmjena"
     },
@@ -1405,8 +1405,8 @@
       "label": ".__init__()",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L298",
-      "community": 2,
+      "source_location": "L320",
+      "community": 4,
       "norm_label": ".__init__()",
       "id": "ui_glavni_prozor_dijalogsmjena_init"
     },
@@ -1414,8 +1414,8 @@
       "label": "._odaberi()",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L324",
-      "community": 2,
+      "source_location": "L352",
+      "community": 4,
       "norm_label": "._odaberi()",
       "id": "ui_glavni_prozor_dijalogsmjena_odaberi"
     },
@@ -1423,8 +1423,8 @@
       "label": "_PrikazIzvjestaja",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L329",
-      "community": 2,
+      "source_location": "L357",
+      "community": 4,
       "norm_label": "_prikazizvjestaja",
       "id": "ui_glavni_prozor_prikazizvjestaja"
     },
@@ -1432,8 +1432,8 @@
       "label": ".__init__()",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L330",
-      "community": 2,
+      "source_location": "L358",
+      "community": 4,
       "norm_label": ".__init__()",
       "id": "ui_glavni_prozor_prikazizvjestaja_init"
     },
@@ -1441,8 +1441,8 @@
       "label": "str",
       "file_type": "code",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L330",
-      "community": 2,
+      "source_location": "L358",
+      "community": 4,
       "norm_label": "str",
       "id": "ui_glavni_prozor_py_str"
     },
@@ -1460,7 +1460,7 @@
       "file_type": "code",
       "source_file": "ui/kartica_uredjaja.py",
       "source_location": "L25",
-      "community": 4,
+      "community": 3,
       "norm_label": "uredjajkontroler",
       "id": "ui_kartica_uredjaja_uredjajkontroler"
     },
@@ -1469,7 +1469,7 @@
       "file_type": "code",
       "source_file": "ui/kartica_uredjaja.py",
       "source_location": "L26",
-      "community": 4,
+      "community": 3,
       "norm_label": ".__init__()",
       "id": "ui_kartica_uredjaja_uredjajkontroler_init"
     },
@@ -1478,7 +1478,7 @@
       "file_type": "code",
       "source_file": "ui/kartica_uredjaja.py",
       "source_location": "L26",
-      "community": 4,
+      "community": 3,
       "norm_label": "str",
       "id": "ui_kartica_uredjaja_py_str"
     },
@@ -1487,7 +1487,7 @@
       "file_type": "code",
       "source_file": "ui/kartica_uredjaja.py",
       "source_location": "L26",
-      "community": 4,
+      "community": 3,
       "norm_label": "float",
       "id": "ui_kartica_uredjaja_py_float"
     },
@@ -1496,7 +1496,7 @@
       "file_type": "code",
       "source_file": "ui/kartica_uredjaja.py",
       "source_location": "L56",
-      "community": 4,
+      "community": 3,
       "norm_label": "._izgraduj_ui()",
       "id": "ui_kartica_uredjaja_uredjajkontroler_izgraduj_ui"
     },
@@ -1505,7 +1505,7 @@
       "file_type": "code",
       "source_file": "ui/kartica_uredjaja.py",
       "source_location": "L139",
-      "community": 4,
+      "community": 3,
       "norm_label": ".start_sesiju()",
       "id": "ui_kartica_uredjaja_uredjajkontroler_start_sesiju"
     },
@@ -1513,8 +1513,8 @@
       "label": ".naplati()",
       "file_type": "code",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L172",
-      "community": 4,
+      "source_location": "L175",
+      "community": 3,
       "norm_label": ".naplati()",
       "id": "ui_kartica_uredjaja_uredjajkontroler_naplati"
     },
@@ -1522,8 +1522,8 @@
       "label": ".prebaci()",
       "file_type": "code",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L192",
-      "community": 4,
+      "source_location": "L198",
+      "community": 3,
       "norm_label": ".prebaci()",
       "id": "ui_kartica_uredjaja_uredjajkontroler_prebaci"
     },
@@ -1531,8 +1531,8 @@
       "label": ".dodaj_u_kosaricu()",
       "file_type": "code",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L227",
-      "community": 4,
+      "source_location": "L233",
+      "community": 3,
       "norm_label": ".dodaj_u_kosaricu()",
       "id": "ui_kartica_uredjaja_uredjajkontroler_dodaj_u_kosaricu"
     },
@@ -1540,8 +1540,8 @@
       "label": "Artikal",
       "file_type": "code",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L227",
-      "community": 4,
+      "source_location": "L233",
+      "community": 3,
       "norm_label": "artikal",
       "id": "ui_kartica_uredjaja_py_artikal"
     },
@@ -1549,8 +1549,8 @@
       "label": ".osvjezi_prikaz()",
       "file_type": "code",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L242",
-      "community": 4,
+      "source_location": "L248",
+      "community": 3,
       "norm_label": ".osvjezi_prikaz()",
       "id": "ui_kartica_uredjaja_uredjajkontroler_osvjezi_prikaz"
     },
@@ -1558,8 +1558,8 @@
       "label": "_DijalogIzbora",
       "file_type": "code",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L322",
-      "community": 4,
+      "source_location": "L330",
+      "community": 3,
       "norm_label": "_dijalogizbora",
       "id": "ui_kartica_uredjaja_dijalogizbora"
     },
@@ -1567,8 +1567,8 @@
       "label": ".__init__()",
       "file_type": "code",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L323",
-      "community": 4,
+      "source_location": "L331",
+      "community": 3,
       "norm_label": ".__init__()",
       "id": "ui_kartica_uredjaja_dijalogizbora_init"
     },
@@ -1576,8 +1576,8 @@
       "label": "._odaberi()",
       "file_type": "code",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L348",
-      "community": 4,
+      "source_location": "L356",
+      "community": 3,
       "norm_label": "._odaberi()",
       "id": "ui_kartica_uredjaja_dijalogizbora_odaberi"
     },
@@ -1586,7 +1586,7 @@
       "file_type": "code",
       "source_file": "ui/prikaz_pazara.py",
       "source_location": "L1",
-      "community": 2,
+      "community": 4,
       "norm_label": "prikaz_pazara.py",
       "id": "ui_prikaz_pazara_py"
     },
@@ -1595,7 +1595,7 @@
       "file_type": "code",
       "source_file": "ui/prikaz_pazara.py",
       "source_location": "L5",
-      "community": 2,
+      "community": 4,
       "norm_label": "prikazpazara",
       "id": "ui_prikaz_pazara_prikazpazara"
     },
@@ -1604,7 +1604,7 @@
       "file_type": "code",
       "source_file": "ui/prikaz_pazara.py",
       "source_location": "L6",
-      "community": 2,
+      "community": 4,
       "norm_label": ".__init__()",
       "id": "ui_prikaz_pazara_prikazpazara_init"
     },
@@ -1613,7 +1613,7 @@
       "file_type": "code",
       "source_file": "ui/prikaz_pazara.py",
       "source_location": "L15",
-      "community": 2,
+      "community": 4,
       "norm_label": "._izgraduj_ui()",
       "id": "ui_prikaz_pazara_prikazpazara_izgraduj_ui"
     },
@@ -1622,7 +1622,7 @@
       "file_type": "code",
       "source_file": "ui/prikaz_pazara.py",
       "source_location": "L60",
-      "community": 2,
+      "community": 4,
       "norm_label": "._osvjezi()",
       "id": "ui_prikaz_pazara_prikazpazara_osvjezi"
     },
@@ -1631,7 +1631,7 @@
       "file_type": "code",
       "source_file": "ui/__init__.py",
       "source_location": "L1",
-      "community": 14,
+      "community": 16,
       "norm_label": "__init__.py",
       "id": "ui_init_py"
     },
@@ -1644,7 +1644,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "db_path constant",
       "id": "constants_DB_PATH"
     },
@@ -1683,7 +1683,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 7,
       "norm_label": "admin default password constant",
       "id": "constants_ADMIN_DEFAULT_LOZINKA"
     },
@@ -1696,7 +1696,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "application entry point",
       "id": "main_entrypoint"
     },
@@ -1710,7 +1710,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Thread-safe singleton with _lock and _connection global ensures a single shared SQLite connection for the whole app lifetime, enabling WAL mode and foreign keys once at startup.",
-      "community": 0,
+      "community": 2,
       "norm_label": "singleton db connection pattern",
       "id": "singleton_pattern_db"
     },
@@ -1723,7 +1723,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "appstate (singleton)",
       "id": "models_app_state_AppState"
     },
@@ -1737,7 +1737,7 @@
       "author": null,
       "contributor": null,
       "rationale": "AppState uses __new__ singleton so the current shift ID and worker name are globally accessible without passing state through every UI constructor.",
-      "community": 0,
+      "community": 2,
       "norm_label": "singleton appstate pattern",
       "id": "singleton_pattern_appstate"
     },
@@ -1790,7 +1790,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 3,
+      "community": 7,
       "norm_label": "adminpanel ui",
       "id": "ui_admin_panel_AdminPanel"
     },
@@ -1829,7 +1829,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "glavniprozor (main window)",
       "id": "ui_glavni_prozor_GlavniProzor"
     },
@@ -1855,7 +1855,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 0,
+      "community": 2,
       "norm_label": "prikazpazara (revenue view)",
       "id": "ui_prikaz_pazara_PrikazPazara"
     },
@@ -1868,7 +1868,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "claude settings / pretooluse hooks",
       "id": "settings_claudehooks"
     },
@@ -1881,7 +1881,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "bash tool pretooluse hook",
       "id": "settings_bashtoolhook"
     },
@@ -1894,7 +1894,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "graphify knowledge graph hint (hook context)",
       "id": "settings_graphifyhint"
     },
@@ -1907,7 +1907,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "graphify usage rules",
       "id": "claudemd_graphifyrules"
     },
@@ -1920,7 +1920,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "graphify query command",
       "id": "claudemd_graphifyquery"
     },
@@ -1933,7 +1933,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "graphify update command",
       "id": "claudemd_graphifyupdate"
     },
@@ -1946,7 +1946,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "graph_report.md broad architecture review",
       "id": "claudemd_graphreport"
     },
@@ -1959,7 +1959,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 7,
+      "community": 8,
       "norm_label": "graphify-out/wiki/index.md navigation",
       "id": "claudemd_wikiindex"
     },
@@ -1972,7 +1972,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 10,
       "norm_label": "database package init",
       "id": "database_init"
     },
@@ -1985,7 +1985,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 10,
       "norm_label": "models package init",
       "id": "models_init"
     },
@@ -1998,7 +1998,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 10,
       "norm_label": "services package init",
       "id": "services_init"
     },
@@ -2011,7 +2011,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 8,
+      "community": 10,
       "norm_label": "ui package init",
       "id": "ui_init"
     },
@@ -2020,189 +2020,234 @@
       "file_type": "code",
       "source_file": "services/artikli.py",
       "source_location": "L1",
-      "id": "services_artikli_py",
-      "community": 3,
-      "norm_label": "artikli.py"
+      "community": 0,
+      "norm_label": "artikli.py",
+      "id": "services_artikli_py"
     },
     {
       "label": "ucitaj_artikle()",
       "file_type": "code",
       "source_file": "services/artikli.py",
       "source_location": "L4",
-      "id": "services_artikli_ucitaj_artikle",
-      "community": 3,
-      "norm_label": "ucitaj_artikle()"
+      "community": 0,
+      "norm_label": "ucitaj_artikle()",
+      "id": "services_artikli_ucitaj_artikle"
     },
     {
       "label": "dodaj_artikal()",
       "file_type": "code",
       "source_file": "services/artikli.py",
       "source_location": "L9",
-      "id": "services_artikli_dodaj_artikal",
-      "community": 3,
-      "norm_label": "dodaj_artikal()"
+      "community": 0,
+      "norm_label": "dodaj_artikal()",
+      "id": "services_artikli_dodaj_artikal"
     },
     {
       "label": "str",
       "file_type": "code",
       "source_file": "services/artikli.py",
       "source_location": "L9",
-      "id": "services_artikli_py_str",
-      "community": 3,
-      "norm_label": "str"
+      "community": 0,
+      "norm_label": "str",
+      "id": "services_artikli_py_str"
     },
     {
       "label": "float",
       "file_type": "code",
       "source_file": "services/artikli.py",
       "source_location": "L9",
-      "id": "services_artikli_py_float",
-      "community": 3,
-      "norm_label": "float"
+      "community": 0,
+      "norm_label": "float",
+      "id": "services_artikli_py_float"
     },
     {
       "label": "uredi_artikal()",
       "file_type": "code",
       "source_file": "services/artikli.py",
       "source_location": "L15",
-      "id": "services_artikli_uredi_artikal",
-      "community": 3,
-      "norm_label": "uredi_artikal()"
+      "community": 0,
+      "norm_label": "uredi_artikal()",
+      "id": "services_artikli_uredi_artikal"
     },
     {
       "label": "int",
       "file_type": "code",
       "source_file": "services/artikli.py",
       "source_location": "L15",
-      "id": "services_artikli_py_int",
-      "community": 3,
-      "norm_label": "int"
+      "community": 0,
+      "norm_label": "int",
+      "id": "services_artikli_py_int"
     },
     {
       "label": "brisi_artikal()",
       "file_type": "code",
       "source_file": "services/artikli.py",
       "source_location": "L21",
-      "id": "services_artikli_brisi_artikal",
-      "community": 3,
-      "norm_label": "brisi_artikal()"
+      "community": 0,
+      "norm_label": "brisi_artikal()",
+      "id": "services_artikli_brisi_artikal"
     },
     {
       "label": "SessionState",
       "file_type": "code",
       "source_file": "services/pazar.py",
       "source_location": "L9",
-      "id": "sessionstate",
       "community": 1,
-      "norm_label": "sessionstate"
+      "norm_label": "sessionstate",
+      "id": "sessionstate"
     },
     {
       "label": "start_sesija_prepaid()",
       "file_type": "code",
       "source_file": "services/pazar.py",
       "source_location": "L136",
-      "id": "services_pazar_start_sesija_prepaid",
       "community": 1,
-      "norm_label": "start_sesija_prepaid()"
+      "norm_label": "start_sesija_prepaid()",
+      "id": "services_pazar_start_sesija_prepaid"
     },
     {
       "label": "uredjaji.py",
       "file_type": "code",
       "source_file": "services/uredjaji.py",
       "source_location": "L1",
-      "id": "services_uredjaji_py",
-      "community": 3,
-      "norm_label": "uredjaji.py"
+      "community": 0,
+      "norm_label": "uredjaji.py",
+      "id": "services_uredjaji_py"
     },
     {
       "label": "ucitaj_uredjaje()",
       "file_type": "code",
       "source_file": "services/uredjaji.py",
       "source_location": "L5",
-      "id": "services_uredjaji_ucitaj_uredjaje",
       "community": 0,
-      "norm_label": "ucitaj_uredjaje()"
+      "norm_label": "ucitaj_uredjaje()",
+      "id": "services_uredjaji_ucitaj_uredjaje"
     },
     {
       "label": "dodaj_uredjaj()",
       "file_type": "code",
       "source_file": "services/uredjaji.py",
-      "source_location": "L10",
-      "id": "services_uredjaji_dodaj_uredjaj",
-      "community": 3,
-      "norm_label": "dodaj_uredjaj()"
+      "source_location": "L12",
+      "community": 0,
+      "norm_label": "dodaj_uredjaj()",
+      "id": "services_uredjaji_dodaj_uredjaj"
     },
     {
       "label": "str",
       "file_type": "code",
       "source_file": "services/uredjaji.py",
-      "source_location": "L10",
-      "id": "services_uredjaji_py_str",
-      "community": 3,
-      "norm_label": "str"
+      "source_location": "L12",
+      "community": 0,
+      "norm_label": "str",
+      "id": "services_uredjaji_py_str"
     },
     {
       "label": "float",
       "file_type": "code",
       "source_file": "services/uredjaji.py",
-      "source_location": "L10",
-      "id": "services_uredjaji_py_float",
-      "community": 3,
-      "norm_label": "float"
+      "source_location": "L12",
+      "community": 0,
+      "norm_label": "float",
+      "id": "services_uredjaji_py_float"
     },
     {
       "label": "brisi_uredjaj()",
       "file_type": "code",
       "source_file": "services/uredjaji.py",
-      "source_location": "L16",
-      "id": "services_uredjaji_brisi_uredjaj",
-      "community": 3,
-      "norm_label": "brisi_uredjaj()"
+      "source_location": "L21",
+      "community": 0,
+      "norm_label": "brisi_uredjaj()",
+      "id": "services_uredjaji_brisi_uredjaj"
     },
     {
       "label": "int",
       "file_type": "code",
       "source_file": "services/uredjaji.py",
-      "source_location": "L16",
-      "id": "services_uredjaji_py_int",
-      "community": 3,
-      "norm_label": "int"
+      "source_location": "L21",
+      "community": 0,
+      "norm_label": "int",
+      "id": "services_uredjaji_py_int"
     },
     {
       "label": "seed_uredjaje_ako_prazno()",
       "file_type": "code",
       "source_file": "services/uredjaji.py",
-      "source_location": "L22",
-      "id": "services_uredjaji_seed_uredjaje_ako_prazno",
-      "community": 3,
-      "norm_label": "seed_uredjaje_ako_prazno()"
+      "source_location": "L27",
+      "community": 0,
+      "norm_label": "seed_uredjaje_ako_prazno()",
+      "id": "services_uredjaji_seed_uredjaje_ako_prazno"
     },
     {
       "label": "dohvati_aktivne_sesije()",
       "file_type": "code",
       "source_file": "services/uredjaji.py",
-      "source_location": "L32",
-      "id": "services_uredjaji_dohvati_aktivne_sesije",
-      "community": 3,
-      "norm_label": "dohvati_aktivne_sesije()"
+      "source_location": "L37",
+      "community": 0,
+      "norm_label": "dohvati_aktivne_sesije()",
+      "id": "services_uredjaji_dohvati_aktivne_sesije"
     },
     {
       "label": "ucitaj_logove()",
       "file_type": "code",
       "source_file": "services/uredjaji.py",
-      "source_location": "L41",
-      "id": "services_uredjaji_ucitaj_logove",
-      "community": 3,
-      "norm_label": "ucitaj_logove()"
+      "source_location": "L46",
+      "community": 0,
+      "norm_label": "ucitaj_logove()",
+      "id": "services_uredjaji_ucitaj_logove"
     },
     {
       "label": "bool",
       "file_type": "code",
       "source_file": "ui/admin_panel.py",
       "source_location": "L24",
-      "id": "bool",
+      "community": 0,
+      "norm_label": "bool",
+      "id": "bool"
+    },
+    {
+      "label": "glavni_prozor.py",
+      "file_type": "code",
+      "source_file": "glavni_prozor.py",
+      "source_location": "L1",
+      "community": 4,
+      "norm_label": "glavni_prozor.py",
+      "id": "glavni_prozor_py"
+    },
+    {
+      "label": "int",
+      "file_type": "code",
+      "source_file": "glavni_prozor.py",
+      "source_location": "L117",
       "community": 5,
-      "norm_label": "bool"
+      "norm_label": "int",
+      "id": "int"
+    },
+    {
+      "label": "str",
+      "file_type": "code",
+      "source_file": "glavni_prozor.py",
+      "source_location": "L313",
+      "community": 4,
+      "norm_label": "str",
+      "id": "str"
+    },
+    {
+      "label": "Connection",
+      "file_type": "code",
+      "source_file": "database/models.py",
+      "source_location": "L4",
+      "id": "connection",
+      "community": 9,
+      "norm_label": "connection"
+    },
+    {
+      "label": "._on_tip_promjena()",
+      "file_type": "code",
+      "source_file": "ui/admin_panel.py",
+      "source_location": "L191",
+      "id": "ui_admin_panel_adminpanel_on_tip_promjena",
+      "community": 0,
+      "norm_label": "._on_tip_promjena()"
     }
   ],
   "links": [
@@ -2826,7 +2871,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "database/models.py",
-      "source_location": "L97",
+      "source_location": "L98",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "database_models_py",
@@ -2848,11 +2893,33 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "database/models.py",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "database_models_kreiraj_tabele",
+      "target": "connection",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "database/models.py",
       "source_location": "L97",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "database_models_py_connection",
       "target": "database_models_pokreni_migracije"
+    },
+    {
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "database/models.py",
+      "source_location": "L98",
+      "weight": 1.0,
+      "source": "database_models_pokreni_migracije",
+      "target": "connection",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -4313,9 +4380,9 @@
       "source_file": "services/pazar.py",
       "source_location": "L136",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_pazar_py",
-      "target": "services_pazar_start_sesija_prepaid",
-      "confidence_score": 1.0
+      "target": "services_pazar_start_sesija_prepaid"
     },
     {
       "relation": "references",
@@ -4367,8 +4434,8 @@
       "source_location": "L34",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_pazar_naplati_uredjaj",
-      "target": "services_pazar_izracunaj_iznos_sesije"
+      "source": "services_pazar_izracunaj_iznos_sesije",
+      "target": "services_pazar_naplati_uredjaj"
     },
     {
       "relation": "references",
@@ -4377,9 +4444,9 @@
       "source_file": "services/pazar.py",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_pazar_izracunaj_iznos_sesije",
-      "target": "sessionstate",
-      "confidence_score": 1.0
+      "target": "sessionstate"
     },
     {
       "relation": "references",
@@ -4400,8 +4467,8 @@
       "source_location": "L118",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_pazar_dodaj_artikal_na_uredjaj",
-      "target": "services_pazar_py_float"
+      "source": "services_pazar_py_float",
+      "target": "services_pazar_dodaj_artikal_na_uredjaj"
     },
     {
       "relation": "references",
@@ -4411,8 +4478,8 @@
       "source_location": "L82",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_pazar_naplati_sank_kosaricu",
-      "target": "services_pazar_py_float"
+      "source": "services_pazar_py_float",
+      "target": "services_pazar_naplati_sank_kosaricu"
     },
     {
       "relation": "references",
@@ -4422,8 +4489,8 @@
       "source_location": "L24",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_pazar_naplati_uredjaj",
-      "target": "services_pazar_py_float"
+      "source": "services_pazar_py_float",
+      "target": "services_pazar_naplati_uredjaj"
     },
     {
       "relation": "references",
@@ -4432,9 +4499,9 @@
       "source_file": "services/pazar.py",
       "source_location": "L136",
       "weight": 1.0,
-      "source": "services_pazar_start_sesija_prepaid",
-      "target": "services_pazar_py_float",
-      "confidence_score": 1.0
+      "confidence_score": 1.0,
+      "source": "services_pazar_py_float",
+      "target": "services_pazar_start_sesija_prepaid"
     },
     {
       "relation": "shares_data_with",
@@ -4517,8 +4584,8 @@
       "source_location": "L179",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "ui_kartica_uredjaja_py",
-      "target": "services_pazar_naplati_uredjaj"
+      "source": "services_pazar_naplati_uredjaj",
+      "target": "ui_kartica_uredjaja_py"
     },
     {
       "relation": "calls",
@@ -4528,8 +4595,8 @@
       "source_file": "ui/kartica_uredjaja.py",
       "source_location": "L180",
       "weight": 1.0,
-      "source": "ui_kartica_uredjaja_uredjajkontroler_naplati",
-      "target": "services_pazar_naplati_uredjaj"
+      "source": "services_pazar_naplati_uredjaj",
+      "target": "ui_kartica_uredjaja_uredjajkontroler_naplati"
     },
     {
       "relation": "references",
@@ -4538,9 +4605,9 @@
       "source_file": "services/pazar.py",
       "source_location": "L24",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_pazar_naplati_uredjaj",
-      "target": "sessionstate",
-      "confidence_score": 1.0
+      "target": "sessionstate"
     },
     {
       "relation": "references",
@@ -4550,8 +4617,8 @@
       "source_location": "L118",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_pazar_dodaj_artikal_na_uredjaj",
-      "target": "services_pazar_py_str"
+      "source": "services_pazar_py_str",
+      "target": "services_pazar_dodaj_artikal_na_uredjaj"
     },
     {
       "relation": "references",
@@ -4561,8 +4628,8 @@
       "source_location": "L147",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_pazar_dohvati_nenaplacene_artikle",
-      "target": "services_pazar_py_str"
+      "source": "services_pazar_py_str",
+      "target": "services_pazar_dohvati_nenaplacene_artikle"
     },
     {
       "relation": "references",
@@ -4571,9 +4638,9 @@
       "source_file": "services/pazar.py",
       "source_location": "L136",
       "weight": 1.0,
-      "source": "services_pazar_start_sesija_prepaid",
-      "target": "services_pazar_py_str",
-      "confidence_score": 1.0
+      "confidence_score": 1.0,
+      "source": "services_pazar_py_str",
+      "target": "services_pazar_start_sesija_prepaid"
     },
     {
       "relation": "references",
@@ -4583,8 +4650,8 @@
       "source_location": "L82",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_pazar_naplati_sank_kosaricu",
-      "target": "services_pazar_py_artikal"
+      "source": "services_pazar_py_artikal",
+      "target": "services_pazar_naplati_sank_kosaricu"
     },
     {
       "relation": "references",
@@ -4594,8 +4661,8 @@
       "source_location": "L118",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_pazar_dodaj_artikal_na_uredjaj",
-      "target": "services_pazar_py_int"
+      "source": "services_pazar_py_int",
+      "target": "services_pazar_dodaj_artikal_na_uredjaj"
     },
     {
       "relation": "references",
@@ -4605,8 +4672,8 @@
       "source_location": "L147",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_pazar_dohvati_nenaplacene_artikle",
-      "target": "services_pazar_py_int"
+      "source": "services_pazar_py_int",
+      "target": "services_pazar_dohvati_nenaplacene_artikle"
     },
     {
       "relation": "references",
@@ -4616,8 +4683,8 @@
       "source_location": "L99",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_pazar_dohvati_pazar_smjene",
-      "target": "services_pazar_py_int"
+      "source": "services_pazar_py_int",
+      "target": "services_pazar_dohvati_pazar_smjene"
     },
     {
       "relation": "references",
@@ -4627,8 +4694,8 @@
       "source_location": "L82",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_pazar_naplati_sank_kosaricu",
-      "target": "services_pazar_py_int"
+      "source": "services_pazar_py_int",
+      "target": "services_pazar_naplati_sank_kosaricu"
     },
     {
       "relation": "references",
@@ -4637,9 +4704,9 @@
       "source_file": "services/pazar.py",
       "source_location": "L136",
       "weight": 1.0,
-      "source": "services_pazar_start_sesija_prepaid",
-      "target": "services_pazar_py_int",
-      "confidence_score": 1.0
+      "confidence_score": 1.0,
+      "source": "services_pazar_py_int",
+      "target": "services_pazar_start_sesija_prepaid"
     },
     {
       "relation": "shares_data_with",
@@ -4669,8 +4736,8 @@
       "source_file": "ui/bocni_panel.py",
       "source_location": "L225",
       "weight": 1.0,
-      "source": "ui_bocni_panel_bocnipanel_naplati_sank",
-      "target": "services_pazar_naplati_sank_kosaricu"
+      "source": "services_pazar_naplati_sank_kosaricu",
+      "target": "ui_bocni_panel_bocnipanel_naplati_sank"
     },
     {
       "relation": "imports",
@@ -4680,8 +4747,8 @@
       "source_location": "L224",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "ui_bocni_panel_py",
-      "target": "services_pazar_naplati_sank_kosaricu"
+      "source": "services_pazar_naplati_sank_kosaricu",
+      "target": "ui_bocni_panel_py"
     },
     {
       "relation": "calls",
@@ -4701,8 +4768,8 @@
       "source_file": "ui/glavni_prozor.py",
       "source_location": "L200",
       "weight": 1.0,
-      "source": "ui_glavni_prozor_glavniprozor_osvjezi_status_bar",
-      "target": "services_pazar_dohvati_pazar_smjene"
+      "source": "services_pazar_dohvati_pazar_smjene",
+      "target": "ui_glavni_prozor_glavniprozor_osvjezi_status_bar"
     },
     {
       "relation": "calls",
@@ -4712,8 +4779,8 @@
       "source_file": "ui/glavni_prozor.py",
       "source_location": "L234",
       "weight": 1.0,
-      "source": "ui_glavni_prozor_glavniprozor_zatvori_smjenu",
-      "target": "services_pazar_dohvati_pazar_smjene"
+      "source": "services_pazar_dohvati_pazar_smjene",
+      "target": "ui_glavni_prozor_glavniprozor_zatvori_smjenu"
     },
     {
       "relation": "imports",
@@ -4723,8 +4790,8 @@
       "source_location": "L18",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "ui_glavni_prozor_py",
-      "target": "services_pazar_dohvati_pazar_smjene"
+      "source": "services_pazar_dohvati_pazar_smjene",
+      "target": "ui_glavni_prozor_py"
     },
     {
       "relation": "calls",
@@ -4776,8 +4843,8 @@
       "source_location": "L238",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "ui_kartica_uredjaja_py",
-      "target": "services_pazar_dodaj_artikal_na_uredjaj"
+      "source": "services_pazar_dodaj_artikal_na_uredjaj",
+      "target": "ui_kartica_uredjaja_py"
     },
     {
       "relation": "calls",
@@ -4787,8 +4854,8 @@
       "source_file": "ui/kartica_uredjaja.py",
       "source_location": "L239",
       "weight": 1.0,
-      "source": "ui_kartica_uredjaja_uredjajkontroler_dodaj_u_kosaricu",
-      "target": "services_pazar_dodaj_artikal_na_uredjaj"
+      "source": "services_pazar_dodaj_artikal_na_uredjaj",
+      "target": "ui_kartica_uredjaja_uredjajkontroler_dodaj_u_kosaricu"
     },
     {
       "relation": "contains",
@@ -5147,9 +5214,9 @@
       "source_file": "ui/admin_panel.py",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_admin_panel_py",
-      "target": "services_artikli_ucitaj_artikle",
-      "confidence_score": 1.0
+      "target": "services_artikli_ucitaj_artikle"
     },
     {
       "relation": "imports",
@@ -5158,9 +5225,9 @@
       "source_file": "ui/admin_panel.py",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_admin_panel_py",
-      "target": "services_artikli_dodaj_artikal",
-      "confidence_score": 1.0
+      "target": "services_artikli_dodaj_artikal"
     },
     {
       "relation": "imports",
@@ -5169,9 +5236,9 @@
       "source_file": "ui/admin_panel.py",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_admin_panel_py",
-      "target": "services_artikli_uredi_artikal",
-      "confidence_score": 1.0
+      "target": "services_artikli_uredi_artikal"
     },
     {
       "relation": "imports",
@@ -5180,9 +5247,9 @@
       "source_file": "ui/admin_panel.py",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_admin_panel_py",
-      "target": "services_artikli_brisi_artikal",
-      "confidence_score": 1.0
+      "target": "services_artikli_brisi_artikal"
     },
     {
       "relation": "imports",
@@ -5191,9 +5258,9 @@
       "source_file": "ui/admin_panel.py",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_admin_panel_py",
-      "target": "services_uredjaji_ucitaj_uredjaje",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_ucitaj_uredjaje"
     },
     {
       "relation": "imports",
@@ -5202,9 +5269,9 @@
       "source_file": "ui/admin_panel.py",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_admin_panel_py",
-      "target": "services_uredjaji_dodaj_uredjaj",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_dodaj_uredjaj"
     },
     {
       "relation": "imports",
@@ -5213,9 +5280,9 @@
       "source_file": "ui/admin_panel.py",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_admin_panel_py",
-      "target": "services_uredjaji_brisi_uredjaj",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_brisi_uredjaj"
     },
     {
       "relation": "imports",
@@ -5224,9 +5291,9 @@
       "source_file": "ui/admin_panel.py",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_admin_panel_py",
-      "target": "services_uredjaji_ucitaj_logove",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_ucitaj_logove"
     },
     {
       "relation": "method",
@@ -5242,7 +5309,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L218",
+      "source_location": "L261",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_admin_panel_adminpanel",
@@ -5262,7 +5329,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L197",
+      "source_location": "L222",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_admin_panel_adminpanel",
@@ -5292,7 +5359,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L283",
+      "source_location": "L326",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_admin_panel_adminpanel",
@@ -5322,7 +5389,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L228",
+      "source_location": "L271",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_admin_panel_adminpanel",
@@ -5332,7 +5399,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L260",
+      "source_location": "L303",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_admin_panel_adminpanel",
@@ -5362,7 +5429,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L248",
+      "source_location": "L291",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_admin_panel_adminpanel",
@@ -5372,7 +5439,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L176",
+      "source_location": "L199",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_admin_panel_adminpanel",
@@ -5392,7 +5459,7 @@
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L290",
+      "source_location": "L312",
       "weight": 0.8,
       "confidence_score": 0.5,
       "source": "ui_glavni_prozor_dijalogsmjena",
@@ -5402,7 +5469,7 @@
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L290",
+      "source_location": "L312",
       "weight": 0.8,
       "confidence_score": 0.5,
       "source": "ui_glavni_prozor_glavniprozor",
@@ -5414,7 +5481,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L291",
+      "source_location": "L313",
       "weight": 1.0,
       "source": "ui_glavni_prozor_glavniprozor_otvori_admin",
       "target": "ui_admin_panel_adminpanel"
@@ -5423,7 +5490,7 @@
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L290",
+      "source_location": "L312",
       "weight": 0.8,
       "confidence_score": 0.5,
       "source": "ui_glavni_prozor_prikazizvjestaja",
@@ -5434,7 +5501,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L290",
+      "source_location": "L312",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_py",
@@ -5444,7 +5511,7 @@
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L290",
+      "source_location": "L312",
       "weight": 0.8,
       "confidence_score": 0.5,
       "source": "ui_glavni_prozor_py_int",
@@ -5454,11 +5521,21 @@
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L290",
+      "source_location": "L312",
       "weight": 0.8,
       "confidence_score": 0.5,
       "source": "ui_glavni_prozor_py_str",
       "target": "ui_admin_panel_adminpanel"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "ui/admin_panel.py",
+      "source_location": "L191",
+      "weight": 1.0,
+      "source": "ui_admin_panel_adminpanel",
+      "target": "ui_admin_panel_adminpanel_on_tip_promjena",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -5500,9 +5577,9 @@
       "source_file": "ui/admin_panel.py",
       "source_location": "L24",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_admin_panel_adminpanel_provjeri_lozinku",
-      "target": "bool",
-      "confidence_score": 1.0
+      "target": "bool"
     },
     {
       "relation": "calls",
@@ -5595,6 +5672,17 @@
     {
       "relation": "calls",
       "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "ui/admin_panel.py",
+      "source_location": "L83",
+      "weight": 1.0,
+      "source": "ui_admin_panel_adminpanel_ucitaj_artikle",
+      "target": "ui_bocni_panel_bocnipanel_ucitaj_artikle"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "ui/admin_panel.py",
@@ -5663,11 +5751,22 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L218",
+      "source_location": "L261",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_admin_panel_adminpanel_brisi_uredjaj",
       "target": "ui_admin_panel_py_int"
+    },
+    {
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "ui/admin_panel.py",
+      "source_location": "L191",
+      "weight": 1.0,
+      "source": "ui_admin_panel_adminpanel_on_tip_promjena",
+      "target": "ui_admin_panel_py_str",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -5685,7 +5784,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L174",
+      "source_location": "L189",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_admin_panel_adminpanel_tab_uredjaji",
@@ -5696,7 +5795,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L222",
+      "source_location": "L265",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_admin_panel_adminpanel_brisi_uredjaj",
@@ -5707,7 +5806,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L212",
+      "source_location": "L255",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_admin_panel_adminpanel_dodaj_uredjaj",
@@ -5719,7 +5818,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "ui/admin_panel.py",
-      "source_location": "L180",
+      "source_location": "L203",
       "weight": 1.0,
       "source": "ui_admin_panel_adminpanel_ucitaj_uredjaje",
       "target": "services_uredjaji_ucitaj_uredjaje"
@@ -5730,7 +5829,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "ui/admin_panel.py",
-      "source_location": "L209",
+      "source_location": "L241",
       "weight": 1.0,
       "source": "ui_admin_panel_adminpanel_dodaj_uredjaj",
       "target": "services_uredjaji_dodaj_uredjaj"
@@ -5741,7 +5840,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "ui/admin_panel.py",
-      "source_location": "L221",
+      "source_location": "L243",
+      "weight": 1.0,
+      "source": "ui_admin_panel_adminpanel_dodaj_uredjaj",
+      "target": "services_uredjaji_ucitaj_uredjaje"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "ui/admin_panel.py",
+      "source_location": "L264",
       "weight": 1.0,
       "source": "ui_admin_panel_adminpanel_brisi_uredjaj",
       "target": "services_uredjaji_brisi_uredjaj"
@@ -5751,7 +5861,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/admin_panel.py",
-      "source_location": "L240",
+      "source_location": "L283",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_admin_panel_adminpanel_tab_logovi",
@@ -5763,7 +5873,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "ui/admin_panel.py",
-      "source_location": "L250",
+      "source_location": "L293",
       "weight": 1.0,
       "source": "ui_admin_panel_adminpanel_ucitaj_logove",
       "target": "services_uredjaji_ucitaj_logove"
@@ -5785,9 +5895,9 @@
       "source_file": "ui/bocni_panel.py",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_bocni_panel_py",
-      "target": "services_artikli_ucitaj_artikle",
-      "confidence_score": 1.0
+      "target": "services_artikli_ucitaj_artikle"
     },
     {
       "relation": "method",
@@ -5833,7 +5943,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L211",
+      "source_location": "L214",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_bocni_panel_bocnipanel",
@@ -5843,7 +5953,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L235",
+      "source_location": "L241",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_bocni_panel_bocnipanel",
@@ -5853,7 +5963,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L151",
+      "source_location": "L154",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_bocni_panel_bocnipanel",
@@ -5883,7 +5993,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L194",
+      "source_location": "L197",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_bocni_panel_bocnipanel",
@@ -5999,7 +6109,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L236",
+      "source_location": "L242",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_bocni_panel_bocnipanel_osvjezi",
@@ -6043,7 +6153,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L137",
+      "source_location": "L140",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_bocni_panel_bocnipanel_dodaj_artikal",
@@ -6054,7 +6164,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L129",
+      "source_location": "L132",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_bocni_panel_bocnipanel_dodaj_artikal",
@@ -6076,7 +6186,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L231",
+      "source_location": "L237",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_bocni_panel_bocnipanel_naplati_sank",
@@ -6087,7 +6197,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L237",
+      "source_location": "L243",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_bocni_panel_bocnipanel_osvjezi",
@@ -6098,7 +6208,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L189",
+      "source_location": "L192",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_bocni_panel_bocnipanel_osvjezi_kosaricu",
@@ -6109,7 +6219,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "ui/bocni_panel.py",
-      "source_location": "L194",
+      "source_location": "L197",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_bocni_panel_bocnipanel_ukloni_artikal",
@@ -6379,7 +6489,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L297",
+      "source_location": "L319",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_py",
@@ -6389,7 +6499,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L25",
+      "source_location": "L24",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_py",
@@ -6399,7 +6509,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L329",
+      "source_location": "L357",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_py",
@@ -6410,7 +6520,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L159",
+      "source_location": "L155",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_py",
@@ -6434,9 +6544,9 @@
       "source_file": "ui/glavni_prozor.py",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_glavni_prozor_py",
-      "target": "services_uredjaji_ucitaj_uredjaje",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_ucitaj_uredjaje"
     },
     {
       "relation": "imports",
@@ -6445,9 +6555,9 @@
       "source_file": "ui/glavni_prozor.py",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_glavni_prozor_py",
-      "target": "services_uredjaji_seed_uredjaje_ako_prazno",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_seed_uredjaje_ako_prazno"
     },
     {
       "relation": "imports",
@@ -6456,15 +6566,15 @@
       "source_file": "ui/glavni_prozor.py",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_glavni_prozor_py",
-      "target": "services_uredjaji_dohvati_aktivne_sesije",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_dohvati_aktivne_sesije"
     },
     {
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L26",
+      "source_location": "L25",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor",
@@ -6484,7 +6594,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L206",
+      "source_location": "L246",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor",
@@ -6494,7 +6604,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L121",
+      "source_location": "L118",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor",
@@ -6504,7 +6614,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L194",
+      "source_location": "L234",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor",
@@ -6514,7 +6624,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L289",
+      "source_location": "L311",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor",
@@ -6524,7 +6634,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L279",
+      "source_location": "L301",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor",
@@ -6534,7 +6644,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L139",
+      "source_location": "L136",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor",
@@ -6554,7 +6664,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L293",
+      "source_location": "L315",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor",
@@ -6564,7 +6674,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L43",
+      "source_location": "L42",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor",
@@ -6574,7 +6684,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L187",
+      "source_location": "L227",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor",
@@ -6584,7 +6694,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L154",
+      "source_location": "L150",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor",
@@ -6594,7 +6704,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L213",
+      "source_location": "L253",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor",
@@ -6604,7 +6714,7 @@
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L159",
+      "source_location": "L155",
       "weight": 0.8,
       "confidence_score": 0.5,
       "source": "ui_glavni_prozor_glavniprozor",
@@ -6621,26 +6731,14 @@
       "target": "ui_prikaz_pazara_prikazpazara"
     },
     {
-      "relation": "calls",
-      "context": "call",
+      "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "ui/glavni_prozor.py",
-      "source_location": "L39",
+      "source_file": "glavni_prozor.py",
+      "source_location": "L24",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "ui_glavni_prozor_glavniprozor_init",
-      "target": "ui_glavni_prozor_glavniprozor_izgraduj_ui"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "ui/glavni_prozor.py",
-      "source_location": "L40",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "ui_glavni_prozor_glavniprozor_init",
-      "target": "ui_glavni_prozor_glavniprozor_provjeri_smjenu"
+      "source": "ui_glavni_prozor_glavniprozor",
+      "target": "glavni_prozor_py"
     },
     {
       "relation": "calls",
@@ -6651,6 +6749,28 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor_init",
+      "target": "ui_glavni_prozor_glavniprozor_izgraduj_ui"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "ui/glavni_prozor.py",
+      "source_location": "L39",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_glavni_prozor_glavniprozor_init",
+      "target": "ui_glavni_prozor_glavniprozor_provjeri_smjenu"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "ui/glavni_prozor.py",
+      "source_location": "L37",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_glavni_prozor_glavniprozor_init",
       "target": "ui_glavni_prozor_glavniprozor_seed_uredjaje_ako_prazno"
     },
     {
@@ -6658,7 +6778,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L41",
+      "source_location": "L40",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor_init",
@@ -6713,7 +6833,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L121",
+      "source_location": "L118",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor_obnovi_aktivne_sesije",
@@ -6736,16 +6856,27 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L122",
+      "source_location": "L119",
       "weight": 1.0,
       "source": "ui_glavni_prozor_glavniprozor_obnovi_aktivne_sesije",
       "target": "services_uredjaji_dohvati_aktivne_sesije"
     },
     {
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "glavni_prozor.py",
+      "source_location": "L117",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_glavni_prozor_glavniprozor_obnovi_aktivne_sesije",
+      "target": "int"
+    },
+    {
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L159",
+      "source_location": "L155",
       "weight": 0.8,
       "confidence_score": 0.5,
       "source": "ui_glavni_prozor_py_int",
@@ -6766,7 +6897,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L211",
+      "source_location": "L251",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor_meni_smjena",
@@ -6777,7 +6908,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L146",
+      "source_location": "L143",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor_otvori_smjenu_dijalog",
@@ -6791,15 +6922,15 @@
       "source_location": "L272",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "ui_glavni_prozor_glavniprozor_zatvori_smjenu",
-      "target": "ui_glavni_prozor_glavniprozor_otvori_smjenu_dijalog"
+      "source": "ui_glavni_prozor_glavniprozor_otvori_smjenu_dijalog",
+      "target": "ui_glavni_prozor_glavniprozor_zatvori_smjenu"
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L185",
+      "source_location": "L225",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor_ucitaj_uredjaje",
@@ -6822,7 +6953,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L162",
+      "source_location": "L160",
       "weight": 1.0,
       "source": "ui_glavni_prozor_glavniprozor_ucitaj_uredjaje",
       "target": "services_uredjaji_ucitaj_uredjaje"
@@ -6832,7 +6963,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L277",
+      "source_location": "L299",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor_zatvori_smjenu",
@@ -6843,7 +6974,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L207",
+      "source_location": "L247",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor_meni_smjena",
@@ -6854,7 +6985,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L209",
+      "source_location": "L249",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor_meni_smjena",
@@ -6865,7 +6996,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L252",
+      "source_location": "L286",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_glavniprozor_zatvori_smjenu",
@@ -6886,7 +7017,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L298",
+      "source_location": "L320",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_dijalogsmjena",
@@ -6896,7 +7027,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L324",
+      "source_location": "L352",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_dijalogsmjena",
@@ -6906,7 +7037,7 @@
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L159",
+      "source_location": "L155",
       "weight": 0.8,
       "confidence_score": 0.5,
       "source": "ui_glavni_prozor_dijalogsmjena",
@@ -6923,11 +7054,21 @@
       "target": "ui_prikaz_pazara_prikazpazara"
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "glavni_prozor.py",
+      "source_location": "L274",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_glavni_prozor_dijalogsmjena",
+      "target": "glavni_prozor_py"
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L313",
+      "source_location": "L335",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_dijalogsmjena_init",
@@ -6938,7 +7079,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L299",
+      "source_location": "L321",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_dijalogsmjena_init",
@@ -6948,7 +7089,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L330",
+      "source_location": "L358",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_prikazizvjestaja",
@@ -6958,7 +7099,7 @@
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L159",
+      "source_location": "L155",
       "weight": 0.8,
       "confidence_score": 0.5,
       "source": "ui_glavni_prozor_prikazizvjestaja",
@@ -6975,21 +7116,42 @@
       "target": "ui_prikaz_pazara_prikazpazara"
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "glavni_prozor.py",
+      "source_location": "L312",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_glavni_prozor_prikazizvjestaja",
+      "target": "glavni_prozor_py"
+    },
+    {
       "relation": "references",
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L330",
+      "source_location": "L358",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_glavni_prozor_prikazizvjestaja_init",
       "target": "ui_glavni_prozor_py_str"
     },
     {
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "glavni_prozor.py",
+      "source_location": "L313",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_glavni_prozor_prikazizvjestaja_init",
+      "target": "str"
+    },
+    {
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "ui/glavni_prozor.py",
-      "source_location": "L159",
+      "source_location": "L155",
       "weight": 0.8,
       "confidence_score": 0.5,
       "source": "ui_glavni_prozor_py_str",
@@ -7009,7 +7171,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L322",
+      "source_location": "L330",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_py",
@@ -7032,15 +7194,15 @@
       "source_file": "ui/kartica_uredjaja.py",
       "source_location": "L165",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_py",
-      "target": "services_pazar_start_sesija_prepaid",
-      "confidence_score": 1.0
+      "target": "services_pazar_start_sesija_prepaid"
     },
     {
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L227",
+      "source_location": "L233",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_uredjajkontroler",
@@ -7070,7 +7232,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L172",
+      "source_location": "L175",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_uredjajkontroler",
@@ -7080,7 +7242,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L242",
+      "source_location": "L248",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_uredjajkontroler",
@@ -7090,7 +7252,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L192",
+      "source_location": "L198",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_uredjajkontroler",
@@ -7155,7 +7317,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L323",
+      "source_location": "L331",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_dijalogizbora_init",
@@ -7166,7 +7328,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L170",
+      "source_location": "L173",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_uredjajkontroler_start_sesiju",
@@ -7199,7 +7361,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L190",
+      "source_location": "L196",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_uredjajkontroler_naplati",
@@ -7210,7 +7372,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L204",
+      "source_location": "L210",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_uredjajkontroler_prebaci",
@@ -7221,7 +7383,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L224",
+      "source_location": "L230",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_uredjajkontroler_prebaci",
@@ -7232,7 +7394,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L227",
+      "source_location": "L233",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_uredjajkontroler_dodaj_u_kosaricu",
@@ -7243,7 +7405,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L231",
+      "source_location": "L237",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_uredjajkontroler_dodaj_u_kosaricu",
@@ -7253,7 +7415,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L323",
+      "source_location": "L331",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_dijalogizbora",
@@ -7263,7 +7425,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L348",
+      "source_location": "L356",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_dijalogizbora",
@@ -7274,7 +7436,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ui/kartica_uredjaja.py",
-      "source_location": "L341",
+      "source_location": "L349",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "ui_kartica_uredjaja_dijalogizbora_init",
@@ -7648,9 +7810,9 @@
       "source_file": "services/artikli.py",
       "source_location": "L21",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artikli_py",
-      "target": "services_artikli_brisi_artikal",
-      "confidence_score": 1.0
+      "target": "services_artikli_brisi_artikal"
     },
     {
       "relation": "contains",
@@ -7658,9 +7820,9 @@
       "source_file": "services/artikli.py",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artikli_py",
-      "target": "services_artikli_dodaj_artikal",
-      "confidence_score": 1.0
+      "target": "services_artikli_dodaj_artikal"
     },
     {
       "relation": "contains",
@@ -7668,9 +7830,9 @@
       "source_file": "services/artikli.py",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artikli_py",
-      "target": "services_artikli_ucitaj_artikle",
-      "confidence_score": 1.0
+      "target": "services_artikli_ucitaj_artikle"
     },
     {
       "relation": "contains",
@@ -7678,9 +7840,9 @@
       "source_file": "services/artikli.py",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artikli_py",
-      "target": "services_artikli_uredi_artikal",
-      "confidence_score": 1.0
+      "target": "services_artikli_uredi_artikal"
     },
     {
       "relation": "references",
@@ -7689,9 +7851,9 @@
       "source_file": "services/artikli.py",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artikli_dodaj_artikal",
-      "target": "services_artikli_py_float",
-      "confidence_score": 1.0
+      "target": "services_artikli_py_float"
     },
     {
       "relation": "references",
@@ -7700,9 +7862,9 @@
       "source_file": "services/artikli.py",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artikli_dodaj_artikal",
-      "target": "services_artikli_py_str",
-      "confidence_score": 1.0
+      "target": "services_artikli_py_str"
     },
     {
       "relation": "references",
@@ -7711,9 +7873,9 @@
       "source_file": "services/artikli.py",
       "source_location": "L15",
       "weight": 1.0,
-      "source": "services_artikli_uredi_artikal",
-      "target": "services_artikli_py_str",
-      "confidence_score": 1.0
+      "confidence_score": 1.0,
+      "source": "services_artikli_py_str",
+      "target": "services_artikli_uredi_artikal"
     },
     {
       "relation": "references",
@@ -7722,9 +7884,9 @@
       "source_file": "services/artikli.py",
       "source_location": "L15",
       "weight": 1.0,
-      "source": "services_artikli_uredi_artikal",
-      "target": "services_artikli_py_float",
-      "confidence_score": 1.0
+      "confidence_score": 1.0,
+      "source": "services_artikli_py_float",
+      "target": "services_artikli_uredi_artikal"
     },
     {
       "relation": "references",
@@ -7733,9 +7895,9 @@
       "source_file": "services/artikli.py",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artikli_uredi_artikal",
-      "target": "services_artikli_py_int",
-      "confidence_score": 1.0
+      "target": "services_artikli_py_int"
     },
     {
       "relation": "references",
@@ -7744,59 +7906,59 @@
       "source_file": "services/artikli.py",
       "source_location": "L21",
       "weight": 1.0,
-      "source": "services_artikli_brisi_artikal",
-      "target": "services_artikli_py_int",
-      "confidence_score": 1.0
+      "confidence_score": 1.0,
+      "source": "services_artikli_py_int",
+      "target": "services_artikli_brisi_artikal"
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "services/uredjaji.py",
-      "source_location": "L16",
+      "source_location": "L21",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_uredjaji_py",
-      "target": "services_uredjaji_brisi_uredjaj",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_brisi_uredjaj"
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "services/uredjaji.py",
-      "source_location": "L10",
+      "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_uredjaji_py",
-      "target": "services_uredjaji_dodaj_uredjaj",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_dodaj_uredjaj"
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "services/uredjaji.py",
-      "source_location": "L32",
+      "source_location": "L37",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_uredjaji_py",
-      "target": "services_uredjaji_dohvati_aktivne_sesije",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_dohvati_aktivne_sesije"
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "services/uredjaji.py",
-      "source_location": "L22",
+      "source_location": "L27",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_uredjaji_py",
-      "target": "services_uredjaji_seed_uredjaje_ako_prazno",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_seed_uredjaje_ako_prazno"
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "services/uredjaji.py",
-      "source_location": "L41",
+      "source_location": "L46",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_uredjaji_py",
-      "target": "services_uredjaji_ucitaj_logove",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_ucitaj_logove"
     },
     {
       "relation": "contains",
@@ -7804,64 +7966,64 @@
       "source_file": "services/uredjaji.py",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_uredjaji_py",
-      "target": "services_uredjaji_ucitaj_uredjaje",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_ucitaj_uredjaje"
     },
     {
       "relation": "references",
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "services/uredjaji.py",
-      "source_location": "L10",
+      "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_uredjaji_dodaj_uredjaj",
-      "target": "services_uredjaji_py_float",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_py_float"
     },
     {
       "relation": "references",
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "services/uredjaji.py",
-      "source_location": "L10",
+      "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_uredjaji_dodaj_uredjaj",
-      "target": "services_uredjaji_py_str",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_py_str"
     },
     {
       "relation": "references",
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "services/uredjaji.py",
-      "source_location": "L41",
+      "source_location": "L46",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_uredjaji_ucitaj_logove",
-      "target": "services_uredjaji_py_str",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_py_str"
     },
     {
       "relation": "references",
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "services/uredjaji.py",
-      "source_location": "L16",
+      "source_location": "L21",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_uredjaji_brisi_uredjaj",
-      "target": "services_uredjaji_py_int",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_py_int"
     },
     {
       "relation": "references",
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "services/uredjaji.py",
-      "source_location": "L32",
+      "source_location": "L37",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_uredjaji_dohvati_aktivne_sesije",
-      "target": "services_uredjaji_py_int",
-      "confidence_score": 1.0
+      "target": "services_uredjaji_py_int"
     }
   ],
   "hyperedges": [
@@ -7910,5 +8072,6 @@
       "confidence_score": 0.9,
       "source_file": "ui/glavni_prozor.py"
     }
-  ]
+  ],
+  "built_at_commit": "3969fd2d6832cb3a05861898b9cf9edf823fd88d"
 }

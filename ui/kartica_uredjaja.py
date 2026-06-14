@@ -35,7 +35,7 @@ class UredjajKontroler(ctk.CTkFrame):
         pazar_callback: Callable,
         get_sve_uredjaje: Callable,
     ):
-        super().__init__(parent, width=160, height=210,
+        super().__init__(parent, width=190, height=240,
                          fg_color=KARTICA_BG, corner_radius=12)
         self.pack_propagate(False)
 
@@ -57,9 +57,9 @@ class UredjajKontroler(ctk.CTkFrame):
         # Naziv
         self.lbl_naziv = ctk.CTkLabel(
             self, text=self.ime,
-            font=ctk.CTkFont(size=13, weight="bold")
+            font=ctk.CTkFont(size=14, weight="bold")
         )
-        self.lbl_naziv.pack(pady=(10, 2))
+        self.lbl_naziv.pack(pady=(12, 2))
 
         # Tip oznaka
         boja_tip = "#6366f1" if self.tip == "PS5" else "#4f46e5"
@@ -81,9 +81,9 @@ class UredjajKontroler(ctk.CTkFrame):
         # Timer
         self.lbl_timer = ctk.CTkLabel(
             self, text="--:--",
-            font=ctk.CTkFont(size=18, weight="bold")
+            font=ctk.CTkFont(size=22, weight="bold")
         )
-        self.lbl_timer.pack()
+        self.lbl_timer.pack(pady=(2, 0))
 
         # Iznos
         self.lbl_iznos = ctk.CTkLabel(
@@ -94,7 +94,7 @@ class UredjajKontroler(ctk.CTkFrame):
         self.lbl_iznos.pack()
 
         # Progress bar (prepaid/pass1)
-        self.progress = ctk.CTkProgressBar(self, width=130, height=8)
+        self.progress = ctk.CTkProgressBar(self, width=155, height=8)
         self.progress.set(0)
         self.progress.pack(pady=2)
         self.progress.pack_forget()
@@ -112,31 +112,34 @@ class UredjajKontroler(ctk.CTkFrame):
         btn_frame.pack(side="bottom", pady=(0, 8))
 
         self.btn_start = ctk.CTkButton(
-            btn_frame, text="START", width=70, height=26,
-            font=ctk.CTkFont(size=11, weight="bold"),
+            btn_frame, text="START", width=82, height=30,
+            font=ctk.CTkFont(size=12, weight="bold"),
             command=self.start_sesiju
         )
-        self.btn_start.grid(row=0, column=0, padx=2)
+        self.btn_start.grid(row=0, column=0, padx=3)
 
         self.btn_naplati = ctk.CTkButton(
-            btn_frame, text="NAPLATI", width=70, height=26,
-            font=ctk.CTkFont(size=11, weight="bold"),
+            btn_frame, text="NAPLATI", width=82, height=30,
+            font=ctk.CTkFont(size=12, weight="bold"),
             fg_color=BOJA_NAPLATI,
             command=self.naplati,
             state="disabled"
         )
-        self.btn_naplati.grid(row=0, column=1, padx=2)
+        self.btn_naplati.grid(row=0, column=1, padx=3)
 
         self.btn_prebaci = ctk.CTkButton(
-            btn_frame, text="PREBACI", width=144, height=24,
+            btn_frame, text="PREBACI", width=168, height=26,
             font=ctk.CTkFont(size=10),
             fg_color=BOJA_PREBACI, hover_color="#d97706",
             command=self.prebaci,
             state="disabled"
         )
-        self.btn_prebaci.grid(row=1, column=0, columnspan=2, pady=(4, 0))
+        self.btn_prebaci.grid(row=1, column=0, columnspan=2, pady=(5, 0))
 
     def start_sesiju(self):
+        if self.smjena_id_getter() is None:
+            messagebox.showinfo("Info", "Nema otvorene smjene.")
+            return
         if self.session is not None:
             return
         from ui.dijalog_start import IzborStartaDijalog
@@ -170,6 +173,9 @@ class UredjajKontroler(ctk.CTkFrame):
         self.osvjezi_prikaz()
 
     def naplati(self):
+        if self.smjena_id_getter() is None:
+            messagebox.showinfo("Info", "Nema otvorene smjene.")
+            return
         if self.session is None:
             return
 
@@ -248,9 +254,10 @@ class UredjajKontroler(ctk.CTkFrame):
             self.lbl_iznos.configure(text="")
             self.lbl_kosarica.configure(text="")
             self.progress.pack_forget()
-            self.btn_start.configure(state="normal")
+            smjena_ok = self.smjena_id_getter() is not None
+            self.btn_start.configure(state="normal" if smjena_ok else "disabled")
             self.btn_naplati.configure(state="disabled")
-            self.btn_prebaci.configure(state="disabled")
+            self.btn_prebaci.grid_remove()
             return
 
         tip = self.session.tip
@@ -310,9 +317,11 @@ class UredjajKontroler(ctk.CTkFrame):
         else:
             self.lbl_kosarica.configure(text="")
 
+        smjena_ok = self.smjena_id_getter() is not None
         self.btn_start.configure(state="disabled")
-        self.btn_naplati.configure(state="normal")
-        self.btn_prebaci.configure(state="normal")
+        self.btn_naplati.configure(state="normal" if smjena_ok else "disabled")
+        self.btn_prebaci.grid(row=1, column=0, columnspan=2, pady=(5, 0))
+        self.btn_prebaci.configure(state="normal" if smjena_ok else "disabled")
 
         # Upozorenje za isteklu sesiju
         if self.session.je_istekao():

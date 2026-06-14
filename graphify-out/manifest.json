@@ -20,9 +20,9 @@
     "semantic_hash": "a34eff8caf6e1023eeff1b2c07c10e72"
   },
   "C:\\Users\\User\\Desktop\\task v4.0\\database\\models.py": {
-    "mtime": 1780849334.0,
-    "ast_hash": "d7cc61d21df834c70586b663610b1445",
-    "semantic_hash": "d7cc61d21df834c70586b663610b1445"
+    "mtime": 1781468378.0726058,
+    "ast_hash": "ccd8595679d1f6769b5ddc59afee9a35",
+    "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\task v4.0\\database\\__init__.py": {
     "mtime": 1780849316.0,
@@ -80,14 +80,14 @@
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "C:\\Users\\User\\Desktop\\task v4.0\\ui\\admin_panel.py": {
-    "mtime": 1780852249.4954033,
-    "ast_hash": "7b2f818771734de4192183085df39172",
-    "semantic_hash": "7b2f818771734de4192183085df39172"
+    "mtime": 1781469861.8698256,
+    "ast_hash": "0c1100cd1f487fce3a24c0b7d4ffdbd6",
+    "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\task v4.0\\ui\\bocni_panel.py": {
-    "mtime": 1780852259.5607855,
-    "ast_hash": "b81f1f68ef3ebf9449548752d3603ea6",
-    "semantic_hash": "b81f1f68ef3ebf9449548752d3603ea6"
+    "mtime": 1781467387.3720157,
+    "ast_hash": "0c44d70226994600b9175305feea4360",
+    "semantic_hash": "0c44d70226994600b9175305feea4360"
   },
   "C:\\Users\\User\\Desktop\\task v4.0\\ui\\dijalog_start.py": {
     "mtime": 1780849473.0,
@@ -95,14 +95,14 @@
     "semantic_hash": "ff2b2ecbb176a9006561a23f036bc3c6"
   },
   "C:\\Users\\User\\Desktop\\task v4.0\\ui\\glavni_prozor.py": {
-    "mtime": 1780852289.0658681,
-    "ast_hash": "1954efc94621e2b173eaf8046e39a389",
-    "semantic_hash": "1954efc94621e2b173eaf8046e39a389"
+    "mtime": 1781467926.749187,
+    "ast_hash": "81b5e2ada28f1432af14b67269c34a73",
+    "semantic_hash": "81b5e2ada28f1432af14b67269c34a73"
   },
   "C:\\Users\\User\\Desktop\\task v4.0\\ui\\kartica_uredjaja.py": {
-    "mtime": 1780852298.3536873,
-    "ast_hash": "abc4a668d08c356f58a1be5bfc9e3287",
-    "semantic_hash": "abc4a668d08c356f58a1be5bfc9e3287"
+    "mtime": 1781468782.4874332,
+    "ast_hash": "c0eb04092958d083747118cd550a3196",
+    "semantic_hash": ""
   },
   "C:\\Users\\User\\Desktop\\task v4.0\\ui\\prikaz_pazara.py": {
     "mtime": 1780849585.0,
@@ -125,8 +125,8 @@
     "semantic_hash": "67625650ed6a9d7aaa4e74fb07f44021"
   },
   "C:\\Users\\User\\Desktop\\task v4.0\\services\\uredjaji.py": {
-    "mtime": 1780852187.5959244,
-    "ast_hash": "09340f96b637452156679c88f69b8ee6",
-    "semantic_hash": "09340f96b637452156679c88f69b8ee6"
+    "mtime": 1781468801.1143897,
+    "ast_hash": "956b16f5712994202e772d8c8b1edea0",
+    "semantic_hash": ""
   }
 }
