@@ -1,199 +1,304 @@
-import customtkinter as ctk
-from tkinter import messagebox
+from __future__ import annotations
 from datetime import datetime
+from copy import deepcopy
 from typing import Optional, Callable
-from models.session_state import SessionState
-from models.artikal import Artikal
-from constants import (
-    KARTICA_BG, KARTICA_AKTIVNA,
-    BOJA_NAPLATI, BOJA_PREBACI,
-    BOJA_PASS1, BOJA_PASS2, BOJA_MINECRAFT,
-    CIJENA_MINECRAFT
+
+from PySide6.QtWidgets import (
+    QFrame, QVBoxLayout, QHBoxLayout, QLabel, QWidget,
+    QPushButton, QProgressBar, QMessageBox, QDialog,
+    QListWidget, QListWidgetItem, QDialogButtonBox,
 )
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QFont
+
+from models.session_state import SessionState
+from models.app_state import AppState
+from models.artikal import Artikal
+from constants import CIJENA_MINECRAFT
 
 
-BOJA_STATUS = {
-    "SLOBODNO": "#9ca3af",
-    "U RADU": "#60a5fa",
-    "UNAPRIJED": "#a78bfa",
-    "PASS 1": "#4ade80",
-    "PASS 2": "#fb923c",
-    "MINECRAFT": "#22c55e",
+# status → (bar_color, badge_bg, badge_fg, icon_color, earning_color)
+_STATUS_STYLE = {
+    "slobodno":  ("#1e2433", "#1e2433", "#334155", "#334155", "#1e2d3d"),
+    "u_radu":    ("#3b82f6", "#1e3a5f", "#60a5fa", "#3b82f6", "#e2e8f0"),
+    "pass1":     ("#4ade80", "#14291a", "#4ade80", "#4ade80", "#4ade80"),
+    "pass2":     ("#fb923c", "#2a1500", "#fb923c", "#fb923c", "#fb923c"),
+    "minecraft": ("#22c55e", "#14291a", "#4ade80", "#22c55e", "#4ade80"),
+    "ps5":       ("#8b5cf6", "#1a0f2e", "#a78bfa", "#8b5cf6", "#a78bfa"),
+}
+
+_BADGE_TEXT = {
+    "slobodno":  "SLOBODNO",
+    "u_radu":    "U RADU",
+    "pass1":     "PASS 1",
+    "pass2":     "PASS 2",
+    "minecraft": "MINECRAFT",
 }
 
 
-class UredjajKontroler(ctk.CTkFrame):
+def _tip_to_kljuc(tip_uredjaja: str, session_tip: Optional[str]) -> str:
+    if session_tip is None:
+        return "slobodno"
+    mapa = {
+        "neograniceno": "ps5" if tip_uredjaja == "PS5" else "u_radu",
+        "prepaid":      "u_radu",
+        "pass1":        "pass1",
+        "pass2":        "pass2",
+        "minecraft":    "minecraft",
+    }
+    return mapa.get(session_tip, "u_radu")
+
+
+class UredjajKartica(QWidget):
+    """
+    Transparent wrapper:
+        QVBoxLayout (0 margin, 0 spacing)
+        ├── QFrame#deviceCard  — card with rounded corners
+        └── QFrame#statusBar   — 3px colored bar, outside the rounded rect
+    """
+    pazar_changed = Signal()
+
     def __init__(
         self,
-        parent,
         ime: str,
         tip: str,
         cena: float,
-        smjena_id_getter: Callable,
-        radnik_getter: Callable,
-        log_callback: Callable,
-        pazar_callback: Callable,
+        state: AppState,
         get_sve_uredjaje: Callable,
+        parent=None,
     ):
-        super().__init__(parent, width=190, height=240,
-                         fg_color=KARTICA_BG, corner_radius=12)
-        self.pack_propagate(False)
+        super().__init__(parent)
+        self.setFixedWidth(160)
 
         self.ime = ime
         self.tip = tip.upper()
         self.cena = cena
-        self.smjena_id_getter = smjena_id_getter
-        self.radnik_getter = radnik_getter
-        self.log_callback = log_callback
-        self.pazar_callback = pazar_callback
+        self.state = state
         self.get_sve_uredjaje = get_sve_uredjaje
 
         self.session: Optional[SessionState] = None
         self.kosarica: list = []
 
-        self._izgraduj_ui()
+        # ── Outer layout ──────────────────────────────────────
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
 
-    def _izgraduj_ui(self):
-        # Naziv
-        self.lbl_naziv = ctk.CTkLabel(
-            self, text=self.ime,
-            font=ctk.CTkFont(size=14, weight="bold")
+        self._card = QFrame()
+        self._card.setObjectName("deviceCard")
+        outer.addWidget(self._card)
+
+        self._status_bar = QFrame()
+        self._status_bar.setObjectName("statusBar")
+        self._status_bar.setFixedHeight(3)
+        self._status_bar.setStyleSheet("background: #1e2433;")
+        outer.addWidget(self._status_bar)
+
+        self._build_ui()
+
+    # ── Build card content ─────────────────────────────────────
+
+    def _build_ui(self):
+        root = QVBoxLayout(self._card)
+        root.setContentsMargins(10, 10, 10, 10)
+        root.setSpacing(3)
+
+        self._lbl_icon = QLabel("🖥" if self.tip != "PS5" else "🎮")
+        self._lbl_icon.setObjectName("cardIcon")
+        self._lbl_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        root.addWidget(self._lbl_icon)
+
+        lbl_name = QLabel(self.ime)
+        lbl_name.setObjectName("cardName")
+        lbl_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        root.addWidget(lbl_name)
+
+        self._lbl_badge = QLabel("SLOBODNO")
+        self._lbl_badge.setObjectName("badge")
+        self._lbl_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        root.addWidget(self._lbl_badge, 0, Qt.AlignmentFlag.AlignCenter)
+
+        self._lbl_earning = QLabel("--")
+        self._lbl_earning.setObjectName("cardEarning")
+        self._lbl_earning.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        root.addWidget(self._lbl_earning)
+
+        self._lbl_timer = QLabel("--:--")
+        self._lbl_timer.setObjectName("cardTimer")
+        self._lbl_timer.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        root.addWidget(self._lbl_timer)
+
+        self._progress = QProgressBar()
+        self._progress.setObjectName("cardProgress")
+        self._progress.setRange(0, 1000)
+        self._progress.setValue(0)
+        self._progress.setTextVisible(False)
+        self._progress.hide()
+        root.addWidget(self._progress)
+
+        self._lbl_kosarica = QLabel("")
+        self._lbl_kosarica.setObjectName("cardKosarica")
+        self._lbl_kosarica.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        root.addWidget(self._lbl_kosarica)
+
+        root.addStretch(1)
+
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(4)
+
+        self._btn_start = QPushButton("START")
+        self._btn_start.setObjectName("btnStart")
+        self._btn_start.clicked.connect(self.start_sesiju)
+
+        self._btn_naplati = QPushButton("NAPLATI")
+        self._btn_naplati.setObjectName("btnNaplati")
+        self._btn_naplati.setEnabled(False)
+        self._btn_naplati.clicked.connect(self.naplati)
+
+        btn_row.addWidget(self._btn_start)
+        btn_row.addWidget(self._btn_naplati)
+        root.addLayout(btn_row)
+
+        self._btn_prebaci = QPushButton("↔ PREBACI")
+        self._btn_prebaci.setObjectName("btnPrebaci")
+        self._btn_prebaci.clicked.connect(self.prebaci)
+        self._btn_prebaci.hide()
+        root.addWidget(self._btn_prebaci)
+
+    # ── Refresh ────────────────────────────────────────────────
+
+    def osvjezi(self):
+        smjena_ok = self.state.trenutna_smjena_id is not None
+
+        if self.session is None:
+            self._apply_style("slobodno", _STATUS_STYLE["slobodno"])
+            self._lbl_earning.setText("--")
+            self._lbl_timer.setText("--:--")
+            self._lbl_timer.setObjectName("cardTimer")
+            self._lbl_timer.style().unpolish(self._lbl_timer)
+            self._lbl_timer.style().polish(self._lbl_timer)
+            self._lbl_kosarica.setText("")
+            self._progress.hide()
+            self._btn_start.setEnabled(smjena_ok)
+            self._btn_naplati.setEnabled(False)
+            self._btn_prebaci.hide()
+            return
+
+        tip = self.session.tip
+        kljuc = _tip_to_kljuc(self.tip, tip)
+        self._apply_style(kljuc, _STATUS_STYLE.get(kljuc, _STATUS_STYLE["u_radu"]))
+
+        timer_txt = self.session.formatiraj_timer()
+        self._lbl_timer.setText(timer_txt)
+        self._lbl_timer.setObjectName("cardTimerActive")
+        self._lbl_timer.style().unpolish(self._lbl_timer)
+        self._lbl_timer.style().polish(self._lbl_timer)
+
+        if tip in ("neograniceno", "minecraft"):
+            rate = CIJENA_MINECRAFT if tip == "minecraft" else self.cena
+            iznos = self.session.elapsed_sekundi() / 3600 * rate
+            self._lbl_earning.setText(f"{iznos:.2f} KM")
+        elif tip in ("prepaid", "pass1"):
+            preostalo = self.session.formatiraj_preostalo()
+            self._lbl_earning.setText(f"⏳ {preostalo}" if preostalo else "--")
+        else:
+            self._lbl_earning.setText("")
+
+        if tip in ("prepaid", "pass1"):
+            self._progress.show()
+            self._progress.setValue(int(self.session.progres_prepaid() * 1000))
+        else:
+            self._progress.hide()
+
+        if self.kosarica:
+            total = sum(a.ukupno() for a in self.kosarica)
+            self._lbl_kosarica.setText(f"🛒 {len(self.kosarica)} × {total:.2f} KM")
+        else:
+            self._lbl_kosarica.setText("")
+
+        self._btn_start.setEnabled(False)
+        self._btn_naplati.setEnabled(smjena_ok)
+        self._btn_prebaci.setVisible(True)
+        self._btn_prebaci.setEnabled(smjena_ok)
+
+        if self.session.je_istekao():
+            self._lbl_badge.setText("⚠ ISTEKLO!")
+            self._lbl_badge.setStyleSheet(
+                "background: #7f1d1d; color: #f87171; border-radius: 8px; padding: 2px 8px;"
+            )
+
+    def _apply_style(self, kljuc: str, style: tuple):
+        bar_c, badge_bg, badge_fg, icon_c, earn_c = style
+        self._status_bar.setStyleSheet(
+            f"background: {bar_c}; min-height: 3px; max-height: 3px;"
         )
-        self.lbl_naziv.pack(pady=(12, 2))
-
-        # Tip oznaka
-        boja_tip = "#6366f1" if self.tip == "PS5" else "#4f46e5"
-        self.lbl_tip = ctk.CTkLabel(
-            self, text=self.tip,
-            font=ctk.CTkFont(size=10),
-            text_color=boja_tip
+        self._lbl_badge.setText(_BADGE_TEXT.get(kljuc, kljuc.upper()))
+        self._lbl_badge.setStyleSheet(
+            f"background: {badge_bg}; color: {badge_fg}; border-radius: 8px; padding: 2px 8px;"
         )
-        self.lbl_tip.pack()
+        self._lbl_icon.setStyleSheet(f"color: {icon_c}; font-size: 22px;")
+        self._lbl_earning.setStyleSheet(f"color: {earn_c};")
 
-        # Status
-        self.lbl_status = ctk.CTkLabel(
-            self, text="SLOBODNO",
-            font=ctk.CTkFont(size=11),
-            text_color=BOJA_STATUS["SLOBODNO"]
-        )
-        self.lbl_status.pack(pady=(4, 0))
-
-        # Timer
-        self.lbl_timer = ctk.CTkLabel(
-            self, text="--:--",
-            font=ctk.CTkFont(size=22, weight="bold")
-        )
-        self.lbl_timer.pack(pady=(2, 0))
-
-        # Iznos
-        self.lbl_iznos = ctk.CTkLabel(
-            self, text="",
-            font=ctk.CTkFont(size=11),
-            text_color="#fbbf24"
-        )
-        self.lbl_iznos.pack()
-
-        # Progress bar (prepaid/pass1)
-        self.progress = ctk.CTkProgressBar(self, width=155, height=8)
-        self.progress.set(0)
-        self.progress.pack(pady=2)
-        self.progress.pack_forget()
-
-        # Košarica label
-        self.lbl_kosarica = ctk.CTkLabel(
-            self, text="",
-            font=ctk.CTkFont(size=9),
-            text_color="#9ca3af"
-        )
-        self.lbl_kosarica.pack()
-
-        # Dugmad
-        btn_frame = ctk.CTkFrame(self, fg_color="transparent")
-        btn_frame.pack(side="bottom", pady=(0, 8))
-
-        self.btn_start = ctk.CTkButton(
-            btn_frame, text="START", width=82, height=30,
-            font=ctk.CTkFont(size=12, weight="bold"),
-            command=self.start_sesiju
-        )
-        self.btn_start.grid(row=0, column=0, padx=3)
-
-        self.btn_naplati = ctk.CTkButton(
-            btn_frame, text="NAPLATI", width=82, height=30,
-            font=ctk.CTkFont(size=12, weight="bold"),
-            fg_color=BOJA_NAPLATI,
-            command=self.naplati,
-            state="disabled"
-        )
-        self.btn_naplati.grid(row=0, column=1, padx=3)
-
-        self.btn_prebaci = ctk.CTkButton(
-            btn_frame, text="PREBACI", width=168, height=26,
-            font=ctk.CTkFont(size=10),
-            fg_color=BOJA_PREBACI, hover_color="#d97706",
-            command=self.prebaci,
-            state="disabled"
-        )
-        self.btn_prebaci.grid(row=1, column=0, columnspan=2, pady=(5, 0))
+    # ── Actions ────────────────────────────────────────────────
 
     def start_sesiju(self):
-        if self.smjena_id_getter() is None:
-            messagebox.showinfo("Info", "Nema otvorene smjene.")
+        if self.state.trenutna_smjena_id is None:
+            QMessageBox.information(self.window(), "Info", "Nema otvorene smjene.")
             return
         if self.session is not None:
             return
+
         from ui.dijalog_start import IzborStartaDijalog
-        dijalog = IzborStartaDijalog(self.winfo_toplevel(), self.tip, self.cena)
-        if dijalog.rezultat is None:
+        dlg = IzborStartaDijalog(self.window(), self.tip, self.cena)
+        dlg.exec()
+        if dlg.rezultat is None:
             return
 
-        rezultat = dijalog.rezultat
+        rezultat = dlg.rezultat
         tip = rezultat["tip"]
-
         self.session = SessionState(
             vreme_starta=datetime.now(),
             limit_sekundi=rezultat.get("limit_sekundi"),
             is_prepaid=(tip == "prepaid"),
             is_pass2=(tip == "pass2"),
             is_minecraft=(tip == "minecraft"),
-            tip=tip
+            tip=tip,
         )
         self.kosarica = []
 
-        smjena_id = self.smjena_id_getter()
-        radnik = self.radnik_getter()
+        smjena_id = self.state.trenutna_smjena_id
+        radnik = self.state.ime_radnika
 
-        # Naplati pass tip odmah
         if tip in ("prepaid", "pass1", "pass2") and rezultat["iznos"] > 0:
             from services.pazar import start_sesija_prepaid
             start_sesija_prepaid(self.ime, rezultat["iznos"], smjena_id, tip)
-            self.pazar_callback()
+            self.pazar_changed.emit()
 
-        self.log_callback(smjena_id, radnik, self.ime, f"START — {tip.upper()}")
-        self.osvjezi_prikaz()
+        from services.logger import upisi_log
+        upisi_log(smjena_id, radnik, self.ime, f"START — {tip.upper()}")
+        self.osvjezi()
 
     def naplati(self):
-        if self.smjena_id_getter() is None:
-            messagebox.showinfo("Info", "Nema otvorene smjene.")
+        if self.state.trenutna_smjena_id is None:
+            QMessageBox.information(self.window(), "Info", "Nema otvorene smjene.")
             return
         if self.session is None:
             return
 
-        smjena_id = self.smjena_id_getter()
-        radnik = self.radnik_getter()
+        smjena_id = self.state.trenutna_smjena_id
+        radnik = self.state.ime_radnika
 
         from services.pazar import naplati_uredjaj
-        iznos = naplati_uredjaj(
-            self.ime, self.session, self.kosarica, self.cena, smjena_id
-        )
+        iznos = naplati_uredjaj(self.ime, self.session, self.kosarica, self.cena, smjena_id)
 
-        self.log_callback(smjena_id, radnik, self.ime,
-                          f"NAPLATA — {self.session.tip.upper()} — {iznos:.2f} KM")
+        from services.logger import upisi_log
+        upisi_log(smjena_id, radnik, self.ime,
+                  f"NAPLATA — {self.session.tip.upper()} — {iznos:.2f} KM")
 
         self.session = None
         self.kosarica = []
-        self.pazar_callback()
-        self.osvjezi_prikaz()
+        self.pazar_changed.emit()
+        self.osvjezi()
 
     def prebaci(self):
         if self.session is None:
@@ -201,159 +306,71 @@ class UredjajKontroler(ctk.CTkFrame):
 
         svi = self.get_sve_uredjaje()
         slobodni = [u for u in svi if u.ime != self.ime and u.session is None]
-
         if not slobodni:
-            messagebox.showinfo("Info", "Nema slobodnih uređaja za prijenos.")
+            QMessageBox.information(self.window(), "Info", "Nema slobodnih uređaja.")
             return
 
-        names = [u.ime for u in slobodni]
-        izbor = _DijalogIzbora(self.winfo_toplevel(), "Odaberi uređaj", names)
-        if izbor.rezultat is None:
+        dlg = _IzborUredjajaDlg(self.window(), [u.ime for u in slobodni])
+        if dlg.exec() != QDialog.DialogCode.Accepted or dlg.odabrano is None:
             return
 
-        cilj = next((u for u in slobodni if u.ime == izbor.rezultat), None)
+        cilj = next((u for u in slobodni if u.ime == dlg.odabrano), None)
         if cilj is None:
             return
 
-        # Prenesi sesiju i košaricu
-        from copy import deepcopy
         cilj.session = deepcopy(self.session)
         cilj.kosarica = deepcopy(self.kosarica)
 
-        smjena_id = self.smjena_id_getter()
-        radnik = self.radnik_getter()
-        self.log_callback(smjena_id, radnik, self.ime,
-                          f"PRIJENOS → {cilj.ime}")
+        smjena_id = self.state.trenutna_smjena_id
+        radnik = self.state.ime_radnika
+        from services.logger import upisi_log
+        upisi_log(smjena_id, radnik, self.ime, f"PRIJENOS → {cilj.ime}")
 
         self.session = None
         self.kosarica = []
-        self.osvjezi_prikaz()
-        cilj.osvjezi_prikaz()
+        self.osvjezi()
+        cilj.osvjezi()
 
     def dodaj_u_kosaricu(self, artikal: Artikal):
         for a in self.kosarica:
             if a.naziv == artikal.naziv:
                 a.kolicina += artikal.kolicina
-                self.osvjezi_prikaz()
+                self.osvjezi()
                 return
-        from copy import deepcopy
         self.kosarica.append(deepcopy(artikal))
-        self.osvjezi_prikaz()
+        self.osvjezi()
 
-        smjena_id = self.smjena_id_getter()
+        smjena_id = self.state.trenutna_smjena_id
         from services.pazar import dodaj_artikal_na_uredjaj
         dodaj_artikal_na_uredjaj(smjena_id, self.ime, artikal.naziv,
                                   artikal.kolicina, artikal.cijena)
 
-    def osvjezi_prikaz(self):
-        if self.session is None:
-            self.configure(fg_color=KARTICA_BG)
-            self.lbl_status.configure(text="SLOBODNO",
-                                       text_color=BOJA_STATUS["SLOBODNO"])
-            self.lbl_timer.configure(text="--:--")
-            self.lbl_iznos.configure(text="")
-            self.lbl_kosarica.configure(text="")
-            self.progress.pack_forget()
-            smjena_ok = self.smjena_id_getter() is not None
-            self.btn_start.configure(state="normal" if smjena_ok else "disabled")
-            self.btn_naplati.configure(state="disabled")
-            self.btn_prebaci.grid_remove()
-            return
 
-        tip = self.session.tip
-        timer_txt = self.session.formatiraj_timer()
-        self.lbl_timer.configure(text=timer_txt)
-
-        # Status i boja
-        status_mapa = {
-            "neograniceno": "U RADU",
-            "prepaid": "UNAPRIJED",
-            "pass1": "PASS 1",
-            "pass2": "PASS 2",
-            "minecraft": "MINECRAFT",
-        }
-        status = status_mapa.get(tip, "U RADU")
-        boja_status = BOJA_STATUS.get(status, "#60a5fa")
-        self.lbl_status.configure(text=status, text_color=boja_status)
-
-        # Boja kartice
-        if tip == "minecraft":
-            self.configure(fg_color="#1a2e1a")
-        elif tip == "pass1":
-            self.configure(fg_color="#1a2e1a")
-        elif tip == "pass2":
-            self.configure(fg_color="#2e1a0a")
-        else:
-            self.configure(fg_color=KARTICA_AKTIVNA)
-
-        # Iznos
-        if tip == "minecraft":
-            elapsed_sati = self.session.elapsed_sekundi() / 3600
-            iznos_trenutan = round(elapsed_sati * CIJENA_MINECRAFT, 2)
-            self.lbl_iznos.configure(text=f"≈ {iznos_trenutan:.2f} KM")
-        elif tip == "neograniceno":
-            elapsed_sati = self.session.elapsed_sekundi() / 3600
-            iznos_trenutan = round(elapsed_sati * self.cena, 2)
-            self.lbl_iznos.configure(text=f"≈ {iznos_trenutan:.2f} KM")
-        else:
-            self.lbl_iznos.configure(text="")
-
-        # Progress bar
-        if tip in ("prepaid", "pass1"):
-            self.progress.pack(pady=2)
-            self.progress.set(self.session.progres_prepaid())
-            preostalo = self.session.formatiraj_preostalo()
-            if preostalo:
-                self.lbl_iznos.configure(text=f"⏳ {preostalo}")
-        else:
-            self.progress.pack_forget()
-
-        # Košarica
-        if self.kosarica:
-            ukupno_k = sum(a.ukupno() for a in self.kosarica)
-            self.lbl_kosarica.configure(
-                text=f"🛒 {len(self.kosarica)} art. {ukupno_k:.2f}KM"
-            )
-        else:
-            self.lbl_kosarica.configure(text="")
-
-        smjena_ok = self.smjena_id_getter() is not None
-        self.btn_start.configure(state="disabled")
-        self.btn_naplati.configure(state="normal" if smjena_ok else "disabled")
-        self.btn_prebaci.grid(row=1, column=0, columnspan=2, pady=(5, 0))
-        self.btn_prebaci.configure(state="normal" if smjena_ok else "disabled")
-
-        # Upozorenje za isteklu sesiju
-        if self.session.je_istekao():
-            self.lbl_status.configure(text="⚠ ISTEKLO!", text_color="#ef4444")
-
-
-class _DijalogIzbora(ctk.CTkToplevel):
-    def __init__(self, parent, naslov: str, opcije: list):
+class _IzborUredjajaDlg(QDialog):
+    def __init__(self, parent, opcije: list):
         super().__init__(parent)
-        self.title(naslov)
-        self.geometry("280x320")
-        self.grab_set()
-        self.lift()
-        self.focus_force()
-        self.rezultat = None
+        self.setWindowTitle("Prebaci sesiju")
+        self.setFixedSize(260, 300)
+        self.odabrano = None
 
-        ctk.CTkLabel(self, text=naslov,
-                      font=ctk.CTkFont(size=14, weight="bold")).pack(pady=12)
+        lay = QVBoxLayout(self)
+        lay.addWidget(QLabel("Odaberi slobodan uređaj:"))
 
-        scroll = ctk.CTkScrollableFrame(self, height=200)
-        scroll.pack(padx=12, fill="both", expand=True)
+        self._lista = QListWidget()
+        for o in opcije:
+            self._lista.addItem(QListWidgetItem(o))
+        self._lista.itemDoubleClicked.connect(self._potvrdi)
+        lay.addWidget(self._lista)
 
-        for opcija in opcije:
-            ctk.CTkButton(
-                scroll, text=opcija,
-                command=lambda o=opcija: self._odaberi(o)
-            ).pack(pady=3, fill="x")
+        btns = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        btns.accepted.connect(self._potvrdi)
+        btns.rejected.connect(self.reject)
+        lay.addWidget(btns)
 
-        ctk.CTkButton(self, text="Otkaži", fg_color="#6b7280",
-                       command=self.destroy).pack(pady=8)
-        self.wait_window()
-
-    def _odaberi(self, opcija):
-        self.rezultat = opcija
-        self.destroy()
+    def _potvrdi(self):
+        item = self._lista.currentItem()
+        if item:
+            self.odabrano = item.text()
+            self.accept()

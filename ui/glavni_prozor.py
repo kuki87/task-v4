@@ -1,380 +1,514 @@
-import customtkinter as ctk
-from tkinter import messagebox, simpledialog
-from typing import Dict, List, Optional
+from __future__ import annotations
+import sys
+import os
+from datetime import datetime
+from typing import Optional
 
-import services.logger  # Aktivira global exception handler
+# Ensure project root is on sys.path regardless of how/where the app is launched
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QLabel, QPushButton, QFrame, QScrollArea, QComboBox,
+    QMessageBox, QInputDialog, QLineEdit, QSizePolicy, QDialog,
+    QDialogButtonBox, QPlainTextEdit,
+)
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtGui import QFont, QColor
 
 from database.db import inicijalizuj_bazu
-from services.uredjaji import (
-    seed_uredjaje_ako_prazno, ucitaj_uredjaje, dohvati_aktivne_sesije
-)
-from models.app_state import AppState
-from models.session_state import SessionState
-from models.artikal import Artikal
-from services.smjena import (
-    otvori_smjenu, zatvori_smjenu, dohvati_aktivnu_smjenu
-)
+from services.uredjaji import seed_uredjaje_ako_prazno, ucitaj_uredjaje, dohvati_aktivne_sesije
+from services.smjena import otvori_smjenu, zatvori_smjenu, dohvati_aktivnu_smjenu
 from services.pazar import dohvati_pazar_smjene
 from services.logger import upisi_log
-
-ctk.set_appearance_mode("dark")
-ctk.set_default_color_theme("blue")
+from models.app_state import AppState
+from models.session_state import SessionState
+import services.logger  # aktivira global exception handler
 
 
 class GlavniProzor:
+    """Thin wrapper: creates QApplication + MainWindow, exposes run()."""
+
     def __init__(self):
-        self.root = ctk.CTk()
-        self.root.title("Caffe & Gaming Zone")
-        self.root.geometry("1080x680")
-        self.root.minsize(900, 600)
+        existing = QApplication.instance()
+        self._qapp: QApplication = existing if isinstance(existing, QApplication) else QApplication(sys.argv)
+
+        # Load QSS
+        qss_path = os.path.join(os.path.dirname(__file__), "style.qss")
+        try:
+            self._qapp.setStyleSheet(open(qss_path, encoding="utf-8").read())
+        except FileNotFoundError:
+            pass
+
+        self._window = _MainWindow()
+        self._window.showMaximized()
+
+    def run(self):
+        sys.exit(self._qapp.exec())
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+
+class _MainWindow(QMainWindow):
+
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Caffe & Gaming Zone")
+        self.setMinimumSize(900, 600)
 
         self.state = AppState()
-        self.kartice: List = []
-        self.bocni_panel = None
-        self._pazar_prozor = None
+        self.kartice: list = []
+        self._svi_uredjaji: list = []
+        self._session_cache: dict = {}
+        self._pazar_dlg: Optional[QDialog] = None
 
         inicijalizuj_bazu()
-        self._seed_uredjaje_ako_prazno()
-        self._izgraduj_ui()
+        self._seed_uredjaje()
+        self._build_ui()
         self._provjeri_smjenu()
         self._ucitaj_uredjaje()
 
-    def _seed_uredjaje_ako_prazno(self):
-        default_uredjaji = [
+        # 1-second refresh timer
+        self._timer = QTimer(self)
+        self._timer.setInterval(1000)
+        self._timer.timeout.connect(self._tick)
+        self._timer.start()
+
+    # ── Seed ──────────────────────────────────────────────────
+
+    def _seed_uredjaje(self):
+        seed_uredjaje_ako_prazno([
             ("PC1", 2.0, "PC", "Classic"), ("PC2", 2.0, "PC", "Classic"),
             ("PC3", 2.0, "PC", "Classic"), ("PC4", 2.0, "PC", "Classic"),
             ("PC5", 2.0, "PC", "Classic"), ("PC6", 2.0, "PC", "Classic"),
             ("PS5-1", 3.0, "PS5", "PS5"), ("PS5-2", 3.0, "PS5", "PS5"),
-        ]
-        seed_uredjaje_ako_prazno(default_uredjaji)
+        ])
 
-    def _izgraduj_ui(self):
-        # Menubar
-        menu_frame = ctk.CTkFrame(self.root, height=40, fg_color="#111827", corner_radius=0)
-        menu_frame.pack(fill="x", side="top")
+    # ── Build UI ──────────────────────────────────────────────
 
-        ctk.CTkButton(
-            menu_frame, text="⚡ Smjena", width=110, height=32,
-            fg_color="transparent", hover_color="#374151",
-            command=self._meni_smjena
-        ).pack(side="left", padx=4, pady=4)
+    def _build_ui(self):
+        central = QWidget()
+        self.setCentralWidget(central)
+        root_lay = QVBoxLayout(central)
+        root_lay.setContentsMargins(0, 0, 0, 0)
+        root_lay.setSpacing(0)
 
-        ctk.CTkButton(
-            menu_frame, text="💰 Pazar", width=110, height=32,
-            fg_color="transparent", hover_color="#374151",
-            command=self._otvori_pazar
-        ).pack(side="left", padx=4, pady=4)
+        root_lay.addWidget(self._build_topbar())
 
-        ctk.CTkButton(
-            menu_frame, text="🔒 Admin", width=110, height=32,
-            fg_color="transparent", hover_color="#374151",
-            command=self._otvori_admin
-        ).pack(side="left", padx=4, pady=4)
+        # Content row
+        content = QWidget()
+        content_lay = QHBoxLayout(content)
+        content_lay.setContentsMargins(0, 0, 0, 0)
+        content_lay.setSpacing(0)
 
-        # Status bar
-        self.lbl_status_bar = ctk.CTkLabel(
-            menu_frame, text="Nema otvorene smjene",
-            font=ctk.CTkFont(size=11),
-            text_color="#9ca3af"
-        )
-        self.lbl_status_bar.pack(side="right", padx=16)
+        # Scroll area for cards
+        self._scroll = QScrollArea()
+        self._scroll.setWidgetResizable(True)
+        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._scroll.setObjectName("cardsScroll")
+        self._cards_content = QWidget()
+        self._cards_content.setObjectName("cardsContent")
+        self._cards_layout = QVBoxLayout(self._cards_content)
+        self._cards_layout.setContentsMargins(12, 12, 12, 12)
+        self._cards_layout.setSpacing(4)
+        self._cards_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self._scroll.setWidget(self._cards_content)
+        content_lay.addWidget(self._scroll, 1)
 
-        # Glavni sadržaj
-        self.main_frame = ctk.CTkFrame(self.root, fg_color="transparent")
-        self.main_frame.pack(fill="both", expand=True, padx=0, pady=0)
-
-        # Lijevo: kartice uređaja
-        self.kartice_frame = ctk.CTkScrollableFrame(
-            self.main_frame, fg_color="#0f0f1a", corner_radius=0
-        )
-        self.kartice_frame.pack(side="left", fill="both", expand=True)
-
-        # Desno: bočni panel
+        # Bocni panel
         from ui.bocni_panel import BocniPanel
-        self.bocni_panel = BocniPanel(
-            self.main_frame,
+        self._bocni = BocniPanel(
             smjena_id_getter=lambda: self.state.trenutna_smjena_id,
             radnik_getter=lambda: self.state.ime_radnika,
-            log_callback=upisi_log,
-            pazar_callback=self._osvjezi_status_bar,
-            get_kartice=lambda: self.kartice,
+            parent=self,
         )
-        self.bocni_panel.pack(side="right", fill="y")
+        self._bocni.pazar_changed.connect(self._osvjezi_status_bar)
+        content_lay.addWidget(self._bocni)
+
+        root_lay.addWidget(content, 1)
+
+    def _build_topbar(self) -> QFrame:
+        bar = QFrame()
+        bar.setObjectName("topbar")
+        bar.setFixedHeight(42)
+
+        lay = QHBoxLayout(bar)
+        lay.setContentsMargins(12, 0, 16, 0)
+        lay.setSpacing(4)
+
+        # Logo
+        logo = QLabel("⚡  Caffe & Gaming")
+        logo.setStyleSheet("font-size: 13px; font-weight: 700; color: #e2e8f0;")
+        lay.addWidget(logo)
+        lay.addSpacing(16)
+
+        # Nav buttons
+        for txt, slot in [
+            ("Smjena",  self._meni_smjena),
+            ("Pazar",   self._otvori_pazar),
+            ("Admin",   self._otvori_admin),
+        ]:
+            btn = QPushButton(txt)
+            btn.clicked.connect(slot)
+            lay.addWidget(btn)
+
+        lay.addStretch()
+
+        # Right-side status labels
+        self._lbl_pazar = QLabel("")
+        self._lbl_pazar.setStyleSheet("color: #f59e0b; font-size: 11px; font-weight: 600;")
+        lay.addWidget(self._lbl_pazar)
+
+        sep1 = QLabel("│")
+        sep1.setStyleSheet("color: #1e2433; font-size: 11px;")
+        lay.addWidget(sep1)
+
+        self._lbl_aktivno = QLabel("")
+        self._lbl_aktivno.setStyleSheet("color: #94a3b8; font-size: 11px;")
+        lay.addWidget(self._lbl_aktivno)
+
+        sep2 = QLabel("│")
+        sep2.setStyleSheet("color: #1e2433; font-size: 11px;")
+        lay.addWidget(sep2)
+
+        self._lbl_radnik = QLabel("Nema smjene")
+        self._lbl_radnik.setStyleSheet("color: #ef4444; font-size: 11px;")
+        lay.addWidget(self._lbl_radnik)
+
+        return bar
+
+    # ── Load / Render ──────────────────────────────────────────
+
+    def _ucitaj_uredjaje(self):
+        self._svi_uredjaji = ucitaj_uredjaje()
+        self._render_kartice()
+        self._bocni.ucitaj_artikle()
+
+    def _render_kartice(self):
+        from ui.kartica_uredjaja import UredjajKartica
+        from collections import defaultdict
+
+        # Save sessions from currently visible cards
+        for k in self.kartice:
+            self._session_cache[k.ime] = (k.session, k.kosarica)
+
+        # Clear layout
+        while self._cards_layout.count():
+            item = self._cards_layout.takeAt(0)
+            if item is not None:
+                w = item.widget()
+                if w is not None:
+                    w.setParent(None)
+                    w.deleteLater()
+        self.kartice.clear()
+
+        filtrirani = list(self._svi_uredjaji)
+
+        # Calculate cards per row (window width minus bocni panel and padding)
+        avail_w = max(200, self.width() - 210 - 32)
+        max_per_row = max(1, avail_w // (160 + 14))
+
+        PC_GRUPE = ["Classic", "VIP", "Super VIP"]
+        po_grupi: dict = defaultdict(list)
+        for u in filtrirani:
+            po_grupi[u["grupa"]].append(u)
+
+        def zona_header(tekst: str, color: str = "#6366f1"):
+            lbl = QLabel(tekst)
+            lbl.setObjectName("zonaHeader")
+            lbl.setStyleSheet(f"color: {color}; font-size: 12px; font-weight: 700; padding: 6px 0 2px 0;")
+            self._cards_layout.addWidget(lbl)
+
+        def grupa_header(tekst: str):
+            lbl = QLabel(f"  {tekst}")
+            lbl.setObjectName("grupaHeader")
+            self._cards_layout.addWidget(lbl)
+
+        def dodaj_kartice(lista: list):
+            row_lay: Optional[QHBoxLayout] = None
+            for i, u in enumerate(lista):
+                if i % max_per_row == 0:
+                    row_widget = QWidget()
+                    row_lay = QHBoxLayout(row_widget)
+                    row_lay.setContentsMargins(0, 0, 0, 0)
+                    row_lay.setSpacing(10)
+                    row_lay.setAlignment(Qt.AlignmentFlag.AlignLeft)
+                    self._cards_layout.addWidget(row_widget)
+
+                kartica = UredjajKartica(
+                    ime=u["ime"],
+                    tip=u["tip"],
+                    cena=u["cena"],
+                    state=self.state,
+                    get_sve_uredjaje=lambda: self.kartice,
+                )
+                kartica.pazar_changed.connect(self._osvjezi_status_bar)
+                if row_lay is not None:
+                    row_lay.addWidget(kartica)
+                self.kartice.append(kartica)
+
+        # PC ZONA
+        pc_prisutne = [g for g in PC_GRUPE if po_grupi.get(g)]
+        if pc_prisutne:
+            zona_header("⚡  PC ZONA", "#6366f1")
+            for g in PC_GRUPE:
+                if po_grupi.get(g):
+                    grupa_header(g)
+                    dodaj_kartice(po_grupi[g])
+
+        # PS5 ZONA
+        if po_grupi.get("PS5"):
+            zona_header("🎮  PS5 ZONA", "#8b5cf6")
+            dodaj_kartice(po_grupi["PS5"])
+
+        # Fallback
+        poznate = set(PC_GRUPE) | {"PS5"}
+        for g, uredjaji in po_grupi.items():
+            if g not in poznate and uredjaji:
+                zona_header(f"📌  {g}", "#475569")
+                dodaj_kartice(uredjaji)
+
+        if not filtrirani:
+            lbl = QLabel("Nema uređaja u bazi")
+            lbl.setStyleSheet("color: #334155; font-size: 13px;")
+            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self._cards_layout.addWidget(lbl)
+
+        # Restore sessions
+        for k in self.kartice:
+            if k.ime in self._session_cache:
+                k.session, k.kosarica = self._session_cache[k.ime]
+            k.osvjezi()
+
+    # ── Timer tick ─────────────────────────────────────────────
+
+    def _tick(self):
+        for k in self.kartice:
+            k.osvjezi()
+        self._bocni.osvjezi(self.kartice)
+        self._osvjezi_status_bar()
+
+    # ── Status bar ─────────────────────────────────────────────
+
+    def _osvjezi_status_bar(self):
+        smjena_id = self.state.trenutna_smjena_id
+        if smjena_id is None:
+            self._lbl_radnik.setText("Nema smjene")
+            self._lbl_radnik.setStyleSheet("color: #ef4444; font-size: 11px;")
+            self._lbl_aktivno.setText("")
+            self._lbl_pazar.setText("")
+            return
+        podaci = dohvati_pazar_smjene(smjena_id)
+        aktivni = sum(1 for k in self.kartice if k.session is not None)
+        ukupno = len(self.kartice)
+        self._lbl_radnik.setText(f"● {self.state.ime_radnika}")
+        self._lbl_radnik.setStyleSheet("color: #22c55e; font-size: 11px; font-weight: 600;")
+        self._lbl_aktivno.setText(f"{aktivni}/{ukupno} aktivno")
+        self._lbl_pazar.setText(f"{podaci['ukupno']:.2f} KM")
+
+    # ── Smjena ─────────────────────────────────────────────────
 
     def _provjeri_smjenu(self):
         aktivna = dohvati_aktivnu_smjenu()
-        if aktivna:
-            odgovor = messagebox.askyesno(
-                "Otkrivena smjena",
-                f"Pronađena otvorena smjena radnika: {aktivna['radnik']}\n"
-                f"Početak: {aktivna['pocetak'][:19].replace('T', ' ')}\n\n"
-                "Nastaviti sa ovom smjenom?"
-            )
-            if odgovor:
-                self.state.postavi_smjenu(aktivna["id"], aktivna["radnik"])
-                self._osvjezi_status_bar()
-                self._obnovi_aktivne_sesije(aktivna["id"])
+        if not aktivna:
+            return
+        odg = QMessageBox.question(
+            self, "Otkrivena smjena",
+            f"Pronađena otvorena smjena radnika: {aktivna['radnik']}\n"
+            f"Početak: {aktivna['pocetak'][:19].replace('T', ' ')}\n\n"
+            "Nastaviti sa ovom smjenom?"
+        )
+        if odg == QMessageBox.StandardButton.Yes:
+            self.state.postavi_smjenu(aktivna["id"], aktivna["radnik"])
+            self._osvjezi_status_bar()
+            self._obnovi_aktivne_sesije(aktivna["id"])
 
     def _obnovi_aktivne_sesije(self, smjena_id: int):
         aktivne = dohvati_aktivne_sesije(smjena_id)
-
-        from datetime import datetime
         for row in aktivne:
             kartica = next((k for k in self.kartice if k.ime == row["uredjaj"]), None)
             if kartica and kartica.session is None:
                 tip = row["tip"] or "neograniceno"
                 vreme = datetime.fromisoformat(row["vreme_starta"])
                 kartica.session = SessionState(
-                    vreme_starta=vreme,
-                    tip=tip,
+                    vreme_starta=vreme, tip=tip,
                     is_prepaid=(tip == "prepaid"),
                     is_pass2=(tip == "pass2"),
                     is_minecraft=(tip == "minecraft"),
                 )
-                kartica.osvjezi_prikaz()
+                self._session_cache[kartica.ime] = (kartica.session, kartica.kosarica)
+                kartica.osvjezi()
 
     def _otvori_smjenu_dijalog(self):
+        if self.state.je_smjena_otvorena():
+            QMessageBox.warning(
+                self, "Upozorenje",
+                f"Smjena je već otvorena!\n"
+                f"Radnik: {self.state.ime_radnika}\n\n"
+                "Zatvori trenutnu smjenu prije otvaranja nove."
+            )
+            return
         while True:
-            ime = simpledialog.askstring("Nova smjena", "Unesite ime radnika:", parent=self.root)
-            if ime and ime.strip():
-                smjena_id = otvori_smjenu(ime.strip())
-                self.state.postavi_smjenu(smjena_id, ime.strip())
-                upisi_log(smjena_id, ime.strip(), "-", "OTVARANJE SMJENE")
+            ime, ok = QInputDialog.getText(self, "Nova smjena", "Unesite ime radnika:")
+            if not ok:
+                return
+            ime = ime.strip()
+            if ime:
+                smjena_id = otvori_smjenu(ime)
+                self.state.postavi_smjenu(smjena_id, ime)
+                upisi_log(smjena_id, ime, "-", "OTVARANJE SMJENE")
                 self._osvjezi_status_bar()
                 return
-            else:
-                odgovor = messagebox.askyesno("Info", "Morate otvoriti smjenu. Pokušati ponovo?")
-                if not odgovor:
-                    return
-
-    def _ucitaj_uredjaje(self):
-        for w in self.kartice_frame.winfo_children():
-            w.destroy()
-        self.kartice.clear()
-
-        from ui.kartica_uredjaja import UredjajKontroler
-        from collections import defaultdict
-
-        # Zone i redosljed prikaza
-        PC_GRUPE = ["Classic", "VIP", "Super VIP"]
-        sve = ucitaj_uredjaje()
-
-        po_grupi: dict = defaultdict(list)
-        for u in sve:
-            po_grupi[u["grupa"]].append(u)
-
-        def _zona_header(tekst, boja="#1e1b4b"):
-            frame = ctk.CTkFrame(self.kartice_frame, fg_color=boja, corner_radius=6)
-            frame.pack(fill="x", padx=8, pady=(12, 2))
-            ctk.CTkLabel(
-                frame, text=tekst,
-                font=ctk.CTkFont(size=13, weight="bold"),
-                text_color="#a5b4fc"
-            ).pack(side="left", padx=12, pady=4)
-
-        def _grupa_header(tekst):
-            ctk.CTkLabel(
-                self.kartice_frame, text=f"  {tekst}",
-                font=ctk.CTkFont(size=11),
-                text_color="#6b7280"
-            ).pack(anchor="w", padx=16, pady=(6, 0))
-
-        def _dodaj_kartice(uredjaji_lista):
-            red_frame = ctk.CTkFrame(self.kartice_frame, fg_color="transparent")
-            red_frame.pack(anchor="w", pady=4, padx=16)
-            for u in uredjaji_lista:
-                kartica = UredjajKontroler(
-                    red_frame,
-                    ime=u["ime"],
-                    tip=u["tip"],
-                    cena=u["cena"],
-                    smjena_id_getter=lambda: self.state.trenutna_smjena_id,
-                    radnik_getter=lambda: self.state.ime_radnika,
-                    log_callback=upisi_log,
-                    pazar_callback=self._osvjezi_status_bar,
-                    get_sve_uredjaje=lambda: self.kartice,
-                )
-                kartica.pack(side="left", padx=6)
-                self.kartice.append(kartica)
-
-        # PC ZONA
-        pc_grupe_prisutne = [g for g in PC_GRUPE if po_grupi.get(g)]
-        if pc_grupe_prisutne:
-            _zona_header("⚡ PC ZONA")
-            for grupa in PC_GRUPE:
-                if po_grupi.get(grupa):
-                    _grupa_header(grupa)
-                    _dodaj_kartice(po_grupi[grupa])
-
-        # PS5 ZONA
-        if po_grupi.get("PS5"):
-            _zona_header("🎮 PS5 ZONA", boja="#1a1a2e")
-            _dodaj_kartice(po_grupi["PS5"])
-
-        # Ostale grupe (fallback za nepoznate)
-        poznate = set(PC_GRUPE) | {"PS5"}
-        for grupa, uredjaji in po_grupi.items():
-            if grupa not in poznate and uredjaji:
-                _zona_header(f"📌 {grupa}", boja="#1f2937")
-                _dodaj_kartice(uredjaji)
-
-        if self.bocni_panel:
-            self.bocni_panel.ucitaj_artikle()
-
-        # Pokretanje timer petlje
-        self._timer_loop()
-
-    def _timer_loop(self):
-        for kartica in self.kartice:
-            kartica.osvjezi_prikaz()
-        if self.bocni_panel:
-            self.bocni_panel.osvjezi(self.kartice)
-        self.root.after(1000, self._timer_loop)
-
-    def _osvjezi_status_bar(self):
-        smjena_id = self.state.trenutna_smjena_id
-        if smjena_id is None:
-            self.lbl_status_bar.configure(text="Nema otvorene smjene", text_color="#ef4444")
-            return
-
-        podaci = dohvati_pazar_smjene(smjena_id)
-        self.lbl_status_bar.configure(
-            text=f"Smjena: {self.state.ime_radnika}  |  Pazar: {podaci['ukupno']:.2f} KM",
-            text_color="#22c55e"
-        )
+            odg = QMessageBox.question(self, "Info", "Morate otvoriti smjenu. Pokušati ponovo?")
+            if odg != QMessageBox.StandardButton.Yes:
+                return
 
     def _meni_smjena(self):
-        izbor = _DijalogSmjena(self.root)
-        if izbor.rezultat == "zatvori":
-            self._zatvori_smjenu()
-        elif izbor.rezultat == "nova":
+        dlg = _DijalogSmjena(self)
+        dlg.exec()
+        if dlg.rezultat == "nova":
             self._otvori_smjenu_dijalog()
+        elif dlg.rezultat == "zatvori":
+            self._zatvori_smjenu()
 
     def _zatvori_smjenu(self):
         smjena_id = self.state.trenutna_smjena_id
         if smjena_id is None:
-            messagebox.showinfo("Info", "Nema otvorene smjene.")
+            QMessageBox.information(self, "Info", "Nema otvorene smjene.")
             return
 
         aktivne_sesije = {k.ime: k.session for k in self.kartice if k.session is not None}
-        sank_kosarica = self.bocni_panel.sank_kosarica if self.bocni_panel else []
+        sank_kosarica = self._bocni.sank_kosarica
 
         upozorenja = []
         if aktivne_sesije:
-            upozorenja.append(f"• {len(aktivne_sesije)} aktivnih sesija će biti prekinuto")
+            upozorenja.append(f"• {len(aktivne_sesije)} aktivnih sesija bit će prekinuto")
         if sank_kosarica:
             upozorenja.append(f"• Šank košarica ({len(sank_kosarica)} stavki) bit će izgubljena!")
 
         if upozorenja:
             poruka = "Upozorenja:\n" + "\n".join(upozorenja) + "\n\nNastaviti?"
-            if not messagebox.askyesno("Zatvaranje smjene", poruka):
+            if QMessageBox.question(self, "Zatvaranje smjene", poruka) != QMessageBox.StandardButton.Yes:
                 return
 
-        # Dohvati pazar
         podaci_pazara = dohvati_pazar_smjene(smjena_id)
-
         zatvori_smjenu(smjena_id, aktivne_sesije, sank_kosarica, podaci_pazara["ukupno"])
         upisi_log(smjena_id, self.state.ime_radnika, "-", "ZATVARANJE SMJENE")
 
-        # Generiši izvještaj
+        # Izvještaj
         podaci_izvj = {"preneseni_racunari": list(aktivne_sesije.keys())}
-        from services.izvjestaj import generiši_tekstualni, generiši_pdf
-        tekst = generiši_tekstualni(smjena_id, podaci_izvj)
-        pdf_file = generiši_pdf(smjena_id, podaci_izvj)
+        try:
+            from services.izvjestaj import generiši_tekstualni, generiši_pdf
+            tekst = generiši_tekstualni(smjena_id, podaci_izvj)
+            pdf_file = generiši_pdf(smjena_id, podaci_izvj)
+            _PrikazIzvjestaja(self, tekst, pdf_file).exec()
+        except Exception:
+            pass
 
-        # Prikaži izvještaj
-        _PrikazIzvjestaja(self.root, tekst, pdf_file)
-
-        # Resetuj stanje — korisnik ručno otvara novu smjenu
+        # Reset
         self.state.zatvori_smjenu()
-
+        self._session_cache.clear()
         for k in self.kartice:
             k.session = None
             k.kosarica = []
-            k.osvjezi_prikaz()
-
-        if self.bocni_panel:
-            self.bocni_panel.sank_kosarica = []
-
+            k.osvjezi()
+        self._bocni.sank_kosarica = []
         self._osvjezi_status_bar()
 
+    # ── Pazar / Admin ──────────────────────────────────────────
+
     def _otvori_pazar(self):
-        if self._pazar_prozor and self._pazar_prozor.winfo_exists():
-            self._pazar_prozor.lift()
-            return
         from ui.prikaz_pazara import PrikazPazara
-        self._pazar_prozor = PrikazPazara(
-            self.root,
-            smjena_id_getter=lambda: self.state.trenutna_smjena_id
-        )
+        if self._pazar_dlg and not self._pazar_dlg.isHidden():
+            self._pazar_dlg.raise_()
+            return
+        self._pazar_dlg = PrikazPazara(self, smjena_id_getter=lambda: self.state.trenutna_smjena_id)
 
     def _otvori_admin(self):
         from ui.admin_panel import AdminPanel
-        AdminPanel(self.root, reload_callback=self._ucitaj_uredjaje)
+        panel = AdminPanel(self, reload_callback=self._ucitaj_uredjaje)
+        if panel.auth_ok:
+            panel.exec()
 
-    def run(self):
-        self.root.mainloop()
+    # ── Resize event ───────────────────────────────────────────
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        # Re-render on resize to recalculate max_per_row
+        if self.kartice or self._svi_uredjaji:
+            self._render_kartice()
 
 
-class _DijalogSmjena(ctk.CTkToplevel):
+# ─────────────────────────────────────────────────────────────────────────────
+# Helper dialogs
+# ─────────────────────────────────────────────────────────────────────────────
+
+class _DijalogSmjena(QDialog):
     def __init__(self, parent):
         super().__init__(parent)
-        self.title("Smjena")
-        self.geometry("280x230")
-        self.grab_set()
-        self.lift()
-        self.focus_force()
-        self.rezultat = None
+        self.setWindowTitle("Smjena")
+        self.setFixedSize(280, 160)
+        self.rezultat: Optional[str] = None
 
-        ctk.CTkLabel(self, text="Upravljanje smjenom",
-                      font=ctk.CTkFont(size=14, weight="bold")).pack(pady=16)
+        lay = QVBoxLayout(self)
+        lay.setSpacing(8)
+        lay.setContentsMargins(24, 20, 24, 16)
 
-        ctk.CTkButton(
-            self, text="Otvori smjenu", width=200, height=36,
-            fg_color="#22c55e", hover_color="#16a34a",
-            command=lambda: self._odaberi("nova")
-        ).pack(pady=4)
+        lbl = QLabel("Upravljanje smjenom")
+        lbl.setStyleSheet("font-size: 14px; font-weight: 700;")
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lay.addWidget(lbl)
 
-        ctk.CTkButton(
-            self, text="Zatvori smjenu", width=200, height=36,
-            fg_color="#ef4444", hover_color="#dc2626",
-            command=lambda: self._odaberi("zatvori")
-        ).pack(pady=4)
+        state = AppState()
+        if state.je_smjena_otvorena():
+            btn_akcija = QPushButton("Zatvori smjenu")
+            btn_akcija.setObjectName("btnDanger")
+            btn_akcija.clicked.connect(lambda: self._odaberi("zatvori"))
+        else:
+            btn_akcija = QPushButton("Otvori smjenu")
+            btn_akcija.setObjectName("btnSuccess")
+            btn_akcija.clicked.connect(lambda: self._odaberi("nova"))
 
-        ctk.CTkButton(
-            self, text="Otkaži", width=200, height=32,
-            fg_color="#6b7280", hover_color="#4b5563",
-            command=self.destroy
-        ).pack(pady=4)
+        btn_akcija.setFixedHeight(36)
+        lay.addWidget(btn_akcija)
 
-        self.wait_window()
+        btn_cancel = QPushButton("Otkaži")
+        btn_cancel.setFixedHeight(30)
+        btn_cancel.clicked.connect(self.reject)
+        lay.addWidget(btn_cancel)
 
-    def _odaberi(self, opcija):
+    def _odaberi(self, opcija: str):
         self.rezultat = opcija
-        self.destroy()
+        self.accept()
 
 
-class _PrikazIzvjestaja(ctk.CTkToplevel):
-    def __init__(self, parent, tekst: str, pdf_file: str):
+class _PrikazIzvjestaja(QDialog):
+    def __init__(self, parent, tekst: str, pdf_file: Optional[str]):
         super().__init__(parent)
-        self.title("Izvještaj smjene")
-        self.geometry("580x520")
-        self.grab_set()
-        self.lift()
+        self.setWindowTitle("Izvještaj smjene")
+        self.resize(580, 500)
 
-        ctk.CTkLabel(self, text="Izvještaj zatvorene smjene",
-                      font=ctk.CTkFont(size=15, weight="bold")).pack(pady=10)
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(12, 12, 12, 10)
+
+        lbl = QLabel("Izvještaj zatvorene smjene")
+        lbl.setStyleSheet("font-size: 14px; font-weight: 700;")
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lay.addWidget(lbl)
 
         if pdf_file:
-            ctk.CTkLabel(
-                self, text=f"PDF snimljen: {pdf_file}",
-                text_color="#22c55e", font=ctk.CTkFont(size=11)
-            ).pack()
+            lbl_pdf = QLabel(f"PDF snimljen: {pdf_file}")
+            lbl_pdf.setStyleSheet("color: #22c55e; font-size: 11px;")
+            lbl_pdf.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lay.addWidget(lbl_pdf)
 
-        textbox = ctk.CTkTextbox(self, height=380, font=ctk.CTkFont(family="Courier", size=11))
-        textbox.pack(padx=12, pady=8, fill="both", expand=True)
-        textbox.insert("0.0", tekst)
-        textbox.configure(state="disabled")
+        textbox = QPlainTextEdit()
+        textbox.setReadOnly(True)
+        textbox.setPlainText(tekst)
+        lay.addWidget(textbox, 1)
 
-        ctk.CTkButton(self, text="Zatvori", width=120,
-                       command=self.destroy).pack(pady=8)
+        btn = QPushButton("Zatvori")
+        btn.clicked.connect(self.accept)
+        lay.addWidget(btn, 0, Qt.AlignmentFlag.AlignRight)

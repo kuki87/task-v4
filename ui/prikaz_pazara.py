@@ -1,101 +1,142 @@
-import customtkinter as ctk
+from __future__ import annotations
 from typing import Callable
 
+from PySide6.QtWidgets import (
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QFrame, QScrollArea, QWidget, QGridLayout,
+)
+from PySide6.QtCore import Qt, QTimer
 
-class PrikazPazara(ctk.CTkToplevel):
+
+class PrikazPazara(QDialog):
     def __init__(self, parent, smjena_id_getter: Callable):
         super().__init__(parent)
-        self.title("Pazar smjene")
-        self.geometry("520x560")
+        self.setWindowTitle("Pazar smjene")
+        self.resize(540, 560)
         self.smjena_id_getter = smjena_id_getter
 
-        self._izgraduj_ui()
+        self._build_ui()
+
+        self._timer = QTimer(self)
+        self._timer.setInterval(5000)
+        self._timer.timeout.connect(self._osvjezi)
+        self._timer.start()
+
         self._osvjezi()
+        self.show()
 
-    def _izgraduj_ui(self):
-        naslov = ctk.CTkLabel(
-            self, text="💰 PAZAR SMJENE",
-            font=ctk.CTkFont(size=18, weight="bold")
+    # ── Build ──────────────────────────────────────────────────
+
+    def _build_ui(self):
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(16, 16, 16, 12)
+        lay.setSpacing(10)
+
+        naslov = QLabel("💰  PAZAR SMJENE")
+        naslov.setStyleSheet("font-size: 18px; font-weight: 700; color: #e2e8f0;")
+        naslov.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lay.addWidget(naslov)
+
+        # Summary frame
+        sumarni = QFrame()
+        sumarni.setStyleSheet(
+            "QFrame { background: #111827; border: 1px solid #1e2433; border-radius: 8px; }"
         )
-        naslov.pack(pady=(16, 8))
+        sum_lay = QHBoxLayout(sumarni)
+        sum_lay.setContentsMargins(16, 10, 16, 10)
 
-        # Sumarni frame
-        sumarni = ctk.CTkFrame(self, corner_radius=10)
-        sumarni.pack(padx=16, fill="x", pady=4)
+        self._lbl_racunari = QLabel("Računari: 0.00 KM")
+        self._lbl_racunari.setStyleSheet("color: #94a3b8; font-size: 13px;")
 
-        self.lbl_racunari = ctk.CTkLabel(
-            sumarni, text="Računari: 0.00 KM",
-            font=ctk.CTkFont(size=13)
-        )
-        self.lbl_racunari.pack(side="left", padx=20, pady=10)
+        self._lbl_sank = QLabel("Šank: 0.00 KM")
+        self._lbl_sank.setStyleSheet("color: #94a3b8; font-size: 13px;")
 
-        self.lbl_sank = ctk.CTkLabel(
-            sumarni, text="Šank: 0.00 KM",
-            font=ctk.CTkFont(size=13)
-        )
-        self.lbl_sank.pack(side="left", padx=20, pady=10)
+        self._lbl_ukupno = QLabel("UKUPNO: 0.00 KM")
+        self._lbl_ukupno.setStyleSheet("color: #f59e0b; font-size: 15px; font-weight: 700;")
 
-        self.lbl_ukupno = ctk.CTkLabel(
-            sumarni, text="UKUPNO: 0.00 KM",
-            font=ctk.CTkFont(size=15, weight="bold"),
-            text_color="#fbbf24"
-        )
-        self.lbl_ukupno.pack(side="right", padx=20, pady=10)
+        sum_lay.addWidget(self._lbl_racunari)
+        sum_lay.addWidget(self._lbl_sank)
+        sum_lay.addStretch()
+        sum_lay.addWidget(self._lbl_ukupno)
+        lay.addWidget(sumarni)
 
-        # Transakcije
-        ctk.CTkLabel(self, text="Transakcije",
-                      font=ctk.CTkFont(size=13, weight="bold"),
-                      text_color="#9ca3af").pack(pady=(8, 2))
+        # Header label
+        hdr = QLabel("Transakcije")
+        hdr.setStyleSheet("color: #475569; font-size: 12px; font-weight: 600;")
+        lay.addWidget(hdr)
 
-        self.scroll = ctk.CTkScrollableFrame(self, height=380)
-        self.scroll.pack(padx=16, pady=4, fill="both", expand=True)
+        # Table header
+        col_hdr = QFrame()
+        col_hdr.setStyleSheet("background: #1e2433; border-radius: 4px;")
+        col_hdr_lay = QHBoxLayout(col_hdr)
+        col_hdr_lay.setContentsMargins(8, 4, 8, 4)
+        for txt, w in [("Vrijeme", 130), ("Uređaj", 110), ("Tip", 100), ("Iznos", 80)]:
+            lbl = QLabel(txt)
+            lbl.setFixedWidth(w)
+            lbl.setStyleSheet("color: #475569; font-size: 10px; font-weight: 600;")
+            col_hdr_lay.addWidget(lbl)
+        col_hdr_lay.addStretch()
+        lay.addWidget(col_hdr)
 
-        # Dugme zatvori
-        ctk.CTkButton(
-            self, text="Zatvori", width=120,
-            fg_color="#6b7280", hover_color="#4b5563",
-            command=self.destroy
-        ).pack(pady=8)
+        # Scroll area for transactions
+        self._scroll = QScrollArea()
+        self._scroll.setWidgetResizable(True)
+        self._content = QWidget()
+        self._content_lay = QVBoxLayout(self._content)
+        self._content_lay.setContentsMargins(0, 0, 0, 0)
+        self._content_lay.setSpacing(1)
+        self._content_lay.addStretch()
+        self._scroll.setWidget(self._content)
+        lay.addWidget(self._scroll, 1)
+
+        btn = QPushButton("Zatvori")
+        btn.clicked.connect(self.close)
+        lay.addWidget(btn, 0, Qt.AlignmentFlag.AlignRight)
+
+    # ── Refresh ────────────────────────────────────────────────
 
     def _osvjezi(self):
         smjena_id = self.smjena_id_getter()
         if smjena_id is None:
-            self.after(5000, self._osvjezi)
             return
 
         from services.pazar import dohvati_pazar_smjene
         podaci = dohvati_pazar_smjene(smjena_id)
 
-        self.lbl_racunari.configure(text=f"Računari: {podaci['racunari']:.2f} KM")
-        self.lbl_sank.configure(text=f"Šank: {podaci['sank']:.2f} KM")
-        self.lbl_ukupno.configure(text=f"UKUPNO: {podaci['ukupno']:.2f} KM")
+        self._lbl_racunari.setText(f"Računari: {podaci['racunari']:.2f} KM")
+        self._lbl_sank.setText(f"Šank: {podaci['sank']:.2f} KM")
+        self._lbl_ukupno.setText(f"UKUPNO: {podaci['ukupno']:.2f} KM")
 
-        for widget in self.scroll.winfo_children():
-            widget.destroy()
+        # Clear rows
+        while self._content_lay.count() > 1:
+            item = self._content_lay.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
 
-        # Zaglavlje
-        zag = ctk.CTkFrame(self.scroll, fg_color="#374151", corner_radius=6)
-        zag.pack(fill="x", pady=(0, 2))
-        for txt, w in [("Vrijeme", 120), ("Uređaj", 100), ("Tip", 90), ("Iznos", 80)]:
-            ctk.CTkLabel(zag, text=txt, width=w,
-                          font=ctk.CTkFont(size=10, weight="bold")).pack(side="left", padx=4)
-
-        # Redovi transakcija
-        boje = ["#1f2937", "#111827"]
+        boje = ["#111827", "#0e1117"]
         for i, t in enumerate(podaci["transakcije"]):
-            red = ctk.CTkFrame(self.scroll, fg_color=boje[i % 2], corner_radius=4)
-            red.pack(fill="x", pady=1)
+            row = QFrame()
+            row.setStyleSheet(
+                f"QFrame {{ background: {boje[i % 2]}; border-radius: 3px; }}"
+            )
+            row_lay = QHBoxLayout(row)
+            row_lay.setContentsMargins(8, 3, 8, 3)
 
             vreme = t["vreme"][:16].replace("T", " ") if t.get("vreme") else ""
             for txt, w in [
-                (vreme, 120),
-                (t.get("uredjaj", ""), 100),
-                (t.get("tip_prodaje", ""), 90),
+                (vreme, 130),
+                (t.get("uredjaj", ""), 110),
+                (t.get("tip_prodaje", ""), 100),
                 (f"{t.get('iznos', 0):.2f} KM", 80),
             ]:
-                ctk.CTkLabel(red, text=txt, width=w,
-                              font=ctk.CTkFont(size=10)).pack(side="left", padx=4)
+                lbl = QLabel(txt)
+                lbl.setFixedWidth(w)
+                lbl.setStyleSheet("color: #94a3b8; font-size: 10px;")
+                row_lay.addWidget(lbl)
+            row_lay.addStretch()
 
-        # Auto-refresh svakih 5 sekundi
-        if self.winfo_exists():
-            self.after(5000, self._osvjezi)
+            self._content_lay.insertWidget(self._content_lay.count() - 1, row)
+
+    def closeEvent(self, event):
+        self._timer.stop()
+        super().closeEvent(event)

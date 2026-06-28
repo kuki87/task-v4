@@ -7,6 +7,11 @@ from models.artikal import Artikal
 
 
 def otvori_smjenu(ime_radnika: str) -> int:
+    aktivna = dohvati_aktivnu_smjenu()
+    if aktivna:
+        raise ValueError(
+            f"Smjena radnika '{aktivna['radnik']}' je već otvorena!"
+        )
     conn = get_db()
     now = datetime.now().isoformat()
     cursor = conn.execute(
