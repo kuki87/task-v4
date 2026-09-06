@@ -1,9 +1,17 @@
+import os
 from datetime import datetime
 from typing import List
 from database.db import get_db
 
+IZVJESTAJI_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Izvještaji")
+
+
+def _osiguraj_folder():
+    os.makedirs(IZVJESTAJI_DIR, exist_ok=True)
+
 
 def generiši_tekstualni(smjena_id: int, podaci: dict) -> str:
+    """Kreira tekstualni izvještaj, sprema ga u Izvještaji/ i vraća sadržaj."""
     conn = get_db()
     smjena = conn.execute(
         "SELECT * FROM smjene WHERE id = ?", (smjena_id,)
@@ -64,7 +72,17 @@ def generiši_tekstualni(smjena_id: int, podaci: dict) -> str:
     tekst.append("")
     tekst.append(f"Generisano: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}")
 
-    return "\n".join(tekst)
+    sadrzaj = "\n".join(tekst)
+
+    _osiguraj_folder()
+    txt_file = os.path.join(
+        IZVJESTAJI_DIR,
+        f"izvjestaj_smjena_{smjena_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    )
+    with open(txt_file, "w", encoding="utf-8") as f:
+        f.write(sadrzaj)
+
+    return sadrzaj
 
 
 def generiši_pdf(smjena_id: int, podaci: dict) -> str:
@@ -84,7 +102,11 @@ def generiši_pdf(smjena_id: int, podaci: dict) -> str:
         (smjena_id,)
     ).fetchall()
 
-    filename = f"izvjestaj_smjena_{smjena_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    _osiguraj_folder()
+    filename = os.path.join(
+        IZVJESTAJI_DIR,
+        f"izvjestaj_smjena_{smjena_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    )
     doc = SimpleDocTemplate(filename, pagesize=A4,
                             leftMargin=2*cm, rightMargin=2*cm,
                             topMargin=2*cm, bottomMargin=2*cm)
