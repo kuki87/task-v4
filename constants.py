@@ -1,4 +1,8 @@
-DB_PATH = "caffe.db"
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DB_PATH = os.path.join(BASE_DIR, "caffe.db")
 
 KARTICA_BG = "#2a2a3e"
 KARTICA_AKTIVNA = "#1a1a2e"
