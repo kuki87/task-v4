@@ -69,8 +69,8 @@ class _MainWindow(QMainWindow):
         inicijalizuj_bazu()
         self._seed_uredjaje()
         self._build_ui()
-        self._provjeri_smjenu()
         self._ucitaj_uredjaje()
+        self._provjeri_smjenu()
 
         # 1-second refresh timer
         self._timer = QTimer(self)
@@ -211,6 +211,7 @@ class _MainWindow(QMainWindow):
         # Calculate cards per row (window width minus bocni panel and padding)
         avail_w = max(200, self.width() - 210 - 32)
         max_per_row = max(1, avail_w // (160 + 14))
+        self._max_per_row = max_per_row
 
         PC_GRUPE = ["Classic", "VIP", "Super VIP"]
         po_grupi: dict = defaultdict(list)
@@ -316,16 +317,21 @@ class _MainWindow(QMainWindow):
         aktivna = dohvati_aktivnu_smjenu()
         if not aktivna:
             return
+        pocetak = aktivna["pocetak"]
+        pocetak_txt = pocetak[:19].replace("T", " ") if pocetak else "—"
         odg = QMessageBox.question(
             self, "Otkrivena smjena",
-            f"Pronađena otvorena smjena radnika: {aktivna['radnik']}\n"
-            f"Početak: {aktivna['pocetak'][:19].replace('T', ' ')}\n\n"
+            f"Pronađena otvorena smjena radnika: {aktivna['radnik'] or '—'}\n"
+            f"Početak: {pocetak_txt}\n\n"
             "Nastaviti sa ovom smjenom?"
         )
         if odg == QMessageBox.StandardButton.Yes:
             self.state.postavi_smjenu(aktivna["id"], aktivna["radnik"])
             self._osvjezi_status_bar()
             self._obnovi_aktivne_sesije(aktivna["id"])
+            for k in self.kartice:
+                k.osvjezi()
+            self._bocni.osvjezi(self.kartice)
 
     def _obnovi_aktivne_sesije(self, smjena_id: int):
         aktivne = dohvati_aktivne_sesije(smjena_id)
@@ -438,9 +444,14 @@ class _MainWindow(QMainWindow):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        # Re-render on resize to recalculate max_per_row
-        if self.kartice or self._svi_uredjaji:
-            self._render_kartice()
+        # Re-render on resize only when cards per row actually changes
+        if not (self.kartice or self._svi_uredjaji):
+            return
+        avail_w = max(200, self.width() - 210 - 32)
+        novi_max = max(1, avail_w // (160 + 14))
+        if novi_max == getattr(self, "_max_per_row", None):
+            return
+        self._render_kartice()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
