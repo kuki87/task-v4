@@ -405,7 +405,9 @@ class _MainWindow(QMainWindow):
                         self, "Smjena je već otvorena u bazi",
                         f"{e}\n\n"
                         f"Početak: {pocetak_txt}\n\n"
-                        "Preuzeti tu smjenu i nastaviti rad?"
+                        "Preuzeti tu smjenu i nastaviti rad?\n\n"
+                        "(Ako odbiješ, nećeš moći otvoriti novu smjenu dok ova ne bude "
+                        "zatvorena. Da bi je zatvorio, moraš je prvo preuzeti.)"
                     )
                     if odg == QMessageBox.StandardButton.Yes:
                         self.state.postavi_smjenu(aktivna["id"], aktivna["radnik"])
