@@ -16,7 +16,7 @@ class SessionState:
 
     def elapsed_sekundi(self) -> int:
         delta = datetime.now() - self.vreme_starta
-        return int(delta.total_seconds())
+        return max(0, int(delta.total_seconds()))
 
     def preostalo_sekundi(self) -> Optional[int]:
         if self.limit_sekundi is None:

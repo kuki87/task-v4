@@ -98,26 +98,18 @@ def kreiraj_tabele(conn: sqlite3.Connection):
 def pokreni_migracije(conn: sqlite3.Connection):
     c = conn.cursor()
 
-    # Migracija: dodaj is_minecraft kolonu ako ne postoji
-    try:
-        c.execute("ALTER TABLE uredjaji ADD COLUMN is_minecraft INTEGER DEFAULT 0")
-        conn.commit()
-    except Exception:
-        pass
-
-    # Migracija: dodaj tip kolonu ako ne postoji
-    try:
-        c.execute("ALTER TABLE uredjaji ADD COLUMN tip TEXT DEFAULT 'PC'")
-        conn.commit()
-    except Exception:
-        pass
-
-    # Migracija: dodaj grupa kolonu ako ne postoji
-    try:
-        c.execute("ALTER TABLE uredjaji ADD COLUMN grupa TEXT DEFAULT 'Classic'")
-        conn.commit()
-    except Exception:
-        pass
+    # Migracija: dodaj kolone koje fale na tabeli uredjaji
+    ocekivane_kolone = [
+        ("is_minecraft", "INTEGER DEFAULT 0"),
+        ("tip", "TEXT DEFAULT 'PC'"),
+        ("grupa", "TEXT DEFAULT 'Classic'"),
+    ]
+    c.execute("PRAGMA table_info(uredjaji)")
+    postojece_kolone = {red["name"] for red in c.fetchall()}
+    for ime_kolone, definicija in ocekivane_kolone:
+        if ime_kolone not in postojece_kolone:
+            c.execute(f"ALTER TABLE uredjaji ADD COLUMN {ime_kolone} {definicija}")
+    conn.commit()
 
     # Migracija: ispravi PS5 uređaje koji su dobili grupu 'Classic' po defaultu
     c.execute("UPDATE uredjaji SET grupa = 'PS5' WHERE tip = 'PS5' AND grupa = 'Classic'")

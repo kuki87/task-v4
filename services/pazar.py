@@ -7,18 +7,15 @@ from constants import CIJENA_MINECRAFT
 
 
 def izracunaj_iznos_sesije(session: SessionState, cena_po_satu: float) -> float:
-    if session.is_minecraft:
+    if session.tip == "minecraft":
         elapsed_sati = session.elapsed_sekundi() / 3600
         return round(elapsed_sati * CIJENA_MINECRAFT, 2)
-    elif session.is_prepaid or session.is_pass2:
-        # Prepaid/pass2 — iznos je već naplacen pri startu
+    if session.tip in ("prepaid", "pass1", "pass2"):
+        # Iznos je već naplacen pri startu
         return 0.0
-    elif session.tip == "pass1":
-        return 0.0
-    else:
-        # Neograniceno — po satu
-        elapsed_sati = session.elapsed_sekundi() / 3600
-        return round(elapsed_sati * cena_po_satu, 2)
+    # Neograniceno i sve nepoznate vrijednosti — po satu
+    elapsed_sati = session.elapsed_sekundi() / 3600
+    return round(elapsed_sati * cena_po_satu, 2)
 
 
 def naplati_uredjaj(
