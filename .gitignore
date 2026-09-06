@@ -6,3 +6,5 @@ graphify-out/
 izvjestaj_*.pdf
 izvjestaj_*.txt
 Izvještaji/
+*.db-wal
+*.db-shm
