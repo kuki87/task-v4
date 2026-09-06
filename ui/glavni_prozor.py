@@ -46,6 +46,8 @@ class GlavniProzor:
         self._window.showMaximized()
 
     def run(self):
+        from database.db import zatvori_bazu
+        self._qapp.aboutToQuit.connect(zatvori_bazu)
         sys.exit(self._qapp.exec())
 
 
