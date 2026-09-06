@@ -149,7 +149,6 @@ hash sa nasumičnim salt-om u tabeli `config`.
 
 * `.gitignore` isključuje `caffe.db`, `__pycache__/`, `*.log` i `graphify-out/`, baza se ne verzioniše.
 * Ako `reportlab` nije instaliran, PDF izvještaj se tiho preskače, tekstualni se i dalje generiše.
-* Projekat je prvobitno pisan u CustomTkinter-u, pa prepisan u PySide6 radi nativnijeg izgleda.
 * `graphify` knowledge graph se osvježava ručno komandom `graphify update .` (vidi `CLAUDE.md`).
 
 ---
