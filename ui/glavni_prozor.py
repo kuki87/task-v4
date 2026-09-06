@@ -22,7 +22,7 @@ from database.db import inicijalizuj_bazu
 from services.uredjaji import seed_uredjaje_ako_prazno, ucitaj_uredjaje, dohvati_aktivne_sesije
 from services.smjena import otvori_smjenu, zatvori_smjenu, dohvati_aktivnu_smjenu
 from services.pazar import dohvati_pazar_smjene
-from services.logger import upisi_log
+from services.logger import upisi_log, log
 from models.app_state import AppState
 from models.session_state import SessionState
 import services.logger  # aktivira global exception handler
@@ -184,9 +184,30 @@ class _MainWindow(QMainWindow):
     # ── Load / Render ──────────────────────────────────────────
 
     def _ucitaj_uredjaje(self):
+        aktivne_prije = {
+            k.ime for k in self.kartice
+            if k.session is not None or k.kosarica
+        }
         self._svi_uredjaji = ucitaj_uredjaje()
+        imena_sada = {u["ime"] for u in self._svi_uredjaji}
+        nestali = sorted(aktivne_prije - imena_sada)
+
         self._render_kartice()
         self._bocni.ucitaj_artikle()
+
+        if nestali:
+            for ime in nestali:
+                log.error(
+                    f"Uređaj '{ime}' uklonjen dok je imao aktivnu sesiju ili "
+                    "nenaplaćenu košaricu, stanje je odbačeno."
+                )
+            QMessageBox.warning(
+                self, "Izgubljene sesije",
+                "Sljedeći uređaji su uklonjeni dok su imali aktivnu sesiju "
+                "ili nenaplaćenu košaricu:\n\n  • "
+                + "\n  • ".join(nestali)
+                + "\n\nTo vrijeme i ti artikli se više ne mogu naplatiti."
+            )
 
     def _render_kartice(self):
         from ui.kartica_uredjaja import UredjajKartica
@@ -195,6 +216,12 @@ class _MainWindow(QMainWindow):
         # Save sessions from currently visible cards
         for k in self.kartice:
             self._session_cache[k.ime] = (k.session, k.kosarica)
+
+        # Drop cache entries for devices that no longer exist
+        imena_u_bazi = {u["ime"] for u in self._svi_uredjaji}
+        for ime in list(self._session_cache):
+            if ime not in imena_u_bazi:
+                self._session_cache.pop(ime, None)
 
         # Clear layout
         while self._cards_layout.count():
