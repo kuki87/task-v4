@@ -391,7 +391,34 @@ class _MainWindow(QMainWindow):
                 return
             ime = ime.strip()
             if ime:
-                smjena_id = otvori_smjenu(ime)
+                try:
+                    smjena_id = otvori_smjenu(ime)
+                except ValueError as e:
+                    log.error(f"Otvaranje smjene odbijeno: {e}")
+                    aktivna = dohvati_aktivnu_smjenu()
+                    if aktivna is None:
+                        QMessageBox.critical(self, "Greška", str(e))
+                        return
+                    pocetak = aktivna["pocetak"]
+                    pocetak_txt = pocetak[:19].replace("T", " ") if pocetak else "—"
+                    odg = QMessageBox.question(
+                        self, "Smjena je već otvorena u bazi",
+                        f"{e}\n\n"
+                        f"Početak: {pocetak_txt}\n\n"
+                        "Preuzeti tu smjenu i nastaviti rad?"
+                    )
+                    if odg == QMessageBox.StandardButton.Yes:
+                        self.state.postavi_smjenu(aktivna["id"], aktivna["radnik"])
+                        self._osvjezi_status_bar()
+                        self._obnovi_aktivne_sesije(aktivna["id"])
+                        for k in self.kartice:
+                            k.osvjezi()
+                        self._bocni.osvjezi(self.kartice)
+                    return
+                except Exception as e:
+                    log.error(f"Otvaranje smjene nije uspjelo: {e}")
+                    QMessageBox.critical(self, "Greška", f"Smjena nije otvorena:\n{e}")
+                    return
                 self.state.postavi_smjenu(smjena_id, ime)
                 upisi_log(smjena_id, ime, "-", "OTVARANJE SMJENE")
                 self._osvjezi_status_bar()
