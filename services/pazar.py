@@ -101,12 +101,16 @@ def dohvati_pazar_smjene(smjena_id: int) -> dict:
     ).fetchall()
 
     ukupno = sum(r["iznos"] for r in rows)
-    racunari = sum(r["iznos"] for r in rows if r["tip_prodaje"] not in ("sank",))
     sank = sum(r["iznos"] for r in rows if r["tip_prodaje"] == "sank")
+    artikli = sum(r["iznos"] for r in rows if r["tip_prodaje"] == "artikal")
+    racunari = sum(
+        r["iznos"] for r in rows if r["tip_prodaje"] not in ("sank", "artikal")
+    )
 
     return {
         "ukupno": round(ukupno, 2),
         "racunari": round(racunari, 2),
+        "artikli": round(artikli, 2),
         "sank": round(sank, 2),
         "transakcije": [dict(r) for r in rows],
     }

@@ -48,6 +48,9 @@ class PrikazPazara(QDialog):
         self._lbl_racunari = QLabel("Računari: 0.00 KM")
         self._lbl_racunari.setStyleSheet("color: #94a3b8; font-size: 13px;")
 
+        self._lbl_artikli = QLabel("Artikli: 0.00 KM")
+        self._lbl_artikli.setStyleSheet("color: #94a3b8; font-size: 13px;")
+
         self._lbl_sank = QLabel("Šank: 0.00 KM")
         self._lbl_sank.setStyleSheet("color: #94a3b8; font-size: 13px;")
 
@@ -55,6 +58,7 @@ class PrikazPazara(QDialog):
         self._lbl_ukupno.setStyleSheet("color: #f59e0b; font-size: 15px; font-weight: 700;")
 
         sum_lay.addWidget(self._lbl_racunari)
+        sum_lay.addWidget(self._lbl_artikli)
         sum_lay.addWidget(self._lbl_sank)
         sum_lay.addStretch()
         sum_lay.addWidget(self._lbl_ukupno)
@@ -104,6 +108,7 @@ class PrikazPazara(QDialog):
         podaci = dohvati_pazar_smjene(smjena_id)
 
         self._lbl_racunari.setText(f"Računari: {podaci['racunari']:.2f} KM")
+        self._lbl_artikli.setText(f"Artikli: {podaci['artikli']:.2f} KM")
         self._lbl_sank.setText(f"Šank: {podaci['sank']:.2f} KM")
         self._lbl_ukupno.setText(f"UKUPNO: {podaci['ukupno']:.2f} KM")
 
