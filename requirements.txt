@@ -1,0 +1,9 @@
+﻿# Caffe & Gaming Zone (task v4.0)
+# Python 3.13+
+
+# GUI, obavezno
+PySide6>=6.7
+
+# PDF izvjestaji, opcionalno
+# Ako nije instaliran, aplikacija radi normalno i generise samo TXT izvjestaj
+reportlab>=4.0
