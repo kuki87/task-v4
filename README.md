@@ -25,7 +25,7 @@ evidenciji pazara, prodaji artikala, praćenju gaming uređaja i generisanju izv
 | **Neograničeno** | Timer broji naviše, bez limita | Po satu, cijena uređaja, pri naplati |
 | **Prepaid** | Timer sa limitom, odbrojava | Unaprijed, pri startu sesije |
 | **Pass 1** | 5 plaćenih sati, 6 dobijenih | Unaprijed |
-| **Pass 2** | Ulaz dozvoljen između 18:00 i 20:00, 5 plaćenih sati | Unaprijed |
+| **Pass 2** | Ulaz od 18:00 do prije 20:00, 5 plaćenih sati | Unaprijed |
 | **Minecraft** | Timer broji naviše | 2.00 KM po satu, pri naplati |
 
 Parametri se mijenjaju u `constants.py`.
@@ -83,7 +83,7 @@ task v4.0/
 │   ├── smjena.py            # Otvaranje, zatvaranje i prenos smjene
 │   ├── uredjaji.py          # CRUD uređaja, cijene grupa, logovi
 │   ├── artikli.py           # CRUD artikala
-│   ├── auth.py              # Admin lozinka (SHA-256 + salt)
+│   ├── auth.py              # Admin lozinka (PBKDF2-SHA256)
 │   ├── izvjestaj.py         # Tekstualni i PDF izvještaji
 │   └── logger.py            # Log akcija u bazu i global exception handler
 │
@@ -129,7 +129,7 @@ ui/  →  services/  →  database/
 | `prodaja_artikala` | Artikli dodati na uređaj, sa flagom `naplaceno` |
 | `artikli` | Šifarnik artikala i cijena |
 | `logovi` | Akcije radnika |
-| `config` | Admin hash i salt |
+| `config` | Verzionisani zapis admin lozinke |
 
 Vrijednosti `tip_prodaje` u `pazar_arhiva`: `racunar`, `prepaid`, `pass1`, `pass2`,
 `minecraft`, `artikal`, `sank`.
@@ -138,10 +138,11 @@ Vrijednosti `tip_prodaje` u `pazar_arhiva`: `racunar`, `prepaid`, `pass1`, `pass
 
 ## Admin pristup
 
-Podrazumijevana lozinka je definisana u `constants.py` kao `ADMIN_DEFAULT_LOZINKA`.
-
-**Promijeni je pri prvom pokretanju** kroz Admin panel. Lozinka se čuva kao SHA-256
-hash sa nasumičnim salt-om u tabeli `config`.
+Pri prvom otvaranju Admin panela aplikacija traži postavljanje nove admin lozinke;
+poznata podrazumijevana lozinka ne postoji. Lozinka se čuva kao verzionisani
+PBKDF2-SHA256 zapis sa 600.000 iteracija i nasumičnim saltom u tabeli `config`.
+Postojeći SHA-256 zapis se nakon prve uspješne prijave automatski migrira na
+PBKDF2 format.
 
 ---
 

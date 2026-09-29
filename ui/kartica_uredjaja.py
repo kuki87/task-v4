@@ -256,7 +256,7 @@ class UredjajKartica(QWidget):
 
         rezultat = dlg.rezultat
         tip = rezultat["tip"]
-        self.session = SessionState(
+        nova_sesija = SessionState(
             vreme_starta=datetime.now(),
             limit_sekundi=rezultat.get("limit_sekundi"),
             is_prepaid=(tip == "prepaid"),
@@ -264,14 +264,17 @@ class UredjajKartica(QWidget):
             is_minecraft=(tip == "minecraft"),
             tip=tip,
         )
-        self.kosarica = []
 
         smjena_id = self.state.trenutna_smjena_id
         radnik = self.state.ime_radnika
+        iznos_starta = rezultat.get("iznos", 0.0)
 
-        if tip in ("prepaid", "pass1", "pass2") and rezultat["iznos"] > 0:
-            from services.pazar import start_sesija_prepaid
-            start_sesija_prepaid(self.ime, rezultat["iznos"], smjena_id, tip)
+        from services.pazar import start_sesija
+        start_sesija(self.ime, nova_sesija, smjena_id, iznos_starta)
+
+        self.session = nova_sesija
+        self.kosarica = []
+        if tip in ("prepaid", "pass1", "pass2") and iznos_starta > 0:
             self.pazar_changed.emit()
 
         from services.logger import upisi_log
@@ -315,16 +318,27 @@ class UredjajKartica(QWidget):
             return
 
         cilj = next((u for u in slobodni if u.ime == dlg.odabrano), None)
-        if cilj is None:
+        if cilj is None or cilj.session is not None:
+            QMessageBox.warning(self.window(), "Prebacivanje", "Odabrani uređaj više nije slobodan.")
             return
 
-        cilj.session = deepcopy(self.session)
-        cilj.kosarica = deepcopy(self.kosarica)
+        nova_sesija = deepcopy(self.session)
+        nova_kosarica = deepcopy(self.kosarica)
 
         smjena_id = self.state.trenutna_smjena_id
         radnik = self.state.ime_radnika
-        from services.logger import upisi_log
-        upisi_log(smjena_id, radnik, self.ime, f"PRIJENOS → {cilj.ime}")
+        from services.pazar import prebaci_sesiju_na_uredjaj
+        try:
+            prebaci_sesiju_na_uredjaj(smjena_id, radnik, self.ime, cilj.ime)
+        except Exception as e:
+            QMessageBox.critical(
+                self.window(), "Greška",
+                f"Sesija nije prebačena:\n{e}"
+            )
+            return
+
+        cilj.session = nova_sesija
+        cilj.kosarica = nova_kosarica
 
         self.session = None
         self.kosarica = []
@@ -335,9 +349,9 @@ class UredjajKartica(QWidget):
         for a in self.kosarica:
             if a.naziv == artikal.naziv:
                 a.kolicina += artikal.kolicina
-                self.osvjezi()
-                return
-        self.kosarica.append(deepcopy(artikal))
+                break
+        else:
+            self.kosarica.append(deepcopy(artikal))
         self.osvjezi()
 
         smjena_id = self.state.trenutna_smjena_id

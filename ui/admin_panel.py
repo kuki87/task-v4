@@ -1,4 +1,5 @@
 from __future__ import annotations
+from math import isfinite
 import re
 from typing import Callable, Optional
 
@@ -10,7 +11,10 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-from services.auth import provjeri_admin_lozinku, promijeni_lozinku
+from services.auth import (
+    AUTH_NEDOSTAJE, AUTH_OSTECEN, AUTH_SPREMAN,
+    stanje_admin_lozinke, provjeri_admin_lozinku, promijeni_lozinku,
+)
 from services.artikli import ucitaj_artikle, dodaj_artikal, uredi_artikal, brisi_artikal
 from services.uredjaji import (
     ucitaj_uredjaje, dodaj_uredjaj, brisi_uredjaj,
@@ -26,19 +30,92 @@ class AdminPanel(QDialog):
         self.reload_callback = reload_callback
         self.auth_ok = False
 
-        # Password check BEFORE showing window
-        lozinka, ok = QInputDialog.getText(
-            parent, "Admin", "Unesite admin lozinku:",
-            QLineEdit.EchoMode.Password
-        )
-        if not ok:
+        try:
+            auth_stanje = stanje_admin_lozinke()
+        except Exception as e:
+            QMessageBox.critical(
+                parent, "Greška autentikacije",
+                f"Admin konfiguraciju nije moguće učitati:\n{e}"
+            )
             return
-        if not provjeri_admin_lozinku(lozinka):
-            QMessageBox.critical(parent, "Greška", "Pogrešna lozinka!")
+
+        if auth_stanje == AUTH_NEDOSTAJE:
+            if not self._postavi_prvu_admin_lozinku(parent):
+                return
+        elif auth_stanje == AUTH_OSTECEN:
+            QMessageBox.critical(
+                parent, "Oštećena admin konfiguracija",
+                "Admin podaci za prijavu su nepotpuni ili imaju neispravan format. "
+                "Pristup je blokiran; automatski reset lozinke nije izvršen."
+            )
+            return
+        elif auth_stanje == AUTH_SPREMAN:
+            lozinka, ok = QInputDialog.getText(
+                parent, "Admin", "Unesite admin lozinku:",
+                QLineEdit.EchoMode.Password
+            )
+            if not ok:
+                return
+            try:
+                ispravna = provjeri_admin_lozinku(lozinka)
+            except Exception as e:
+                QMessageBox.critical(
+                    parent, "Greška autentikacije",
+                    f"Provjera admin lozinke nije uspjela:\n{e}"
+                )
+                return
+            if not ispravna:
+                QMessageBox.critical(parent, "Greška", "Pogrešna lozinka!")
+                return
+        else:
+            QMessageBox.critical(
+                parent, "Greška autentikacije",
+                "Nepoznato stanje admin konfiguracije."
+            )
             return
 
         self.auth_ok = True
         self._build_ui()
+
+    def _postavi_prvu_admin_lozinku(self, parent) -> bool:
+        QMessageBox.information(
+            parent, "Prvo pokretanje",
+            "Admin lozinka još nije postavljena. Prije pristupa Admin panelu "
+            "morate postaviti novu lozinku."
+        )
+        nova, ok = QInputDialog.getText(
+            parent, "Nova admin lozinka", "Unesite novu admin lozinku:",
+            QLineEdit.EchoMode.Password
+        )
+        if not ok:
+            return False
+        ponovi, ok = QInputDialog.getText(
+            parent, "Potvrda admin lozinke", "Ponovite novu admin lozinku:",
+            QLineEdit.EchoMode.Password
+        )
+        if not ok:
+            return False
+        if nova != ponovi:
+            QMessageBox.warning(parent, "Greška", "Lozinke se ne podudaraju!")
+            return False
+        if len(nova) < 4:
+            QMessageBox.warning(
+                parent, "Greška", "Lozinka mora imati najmanje 4 znaka!"
+            )
+            return False
+
+        try:
+            sacuvano = promijeni_lozinku(nova)
+        except Exception as e:
+            QMessageBox.critical(
+                parent, "Greška autentikacije",
+                f"Nova admin lozinka nije sačuvana:\n{e}"
+            )
+            return False
+        if not sacuvano:
+            QMessageBox.warning(parent, "Greška", "Admin lozinka nije sačuvana.")
+            return False
+        return True
 
     def exec(self):
         if not self.auth_ok:
@@ -326,8 +403,10 @@ class AdminPanel(QDialog):
         base_ime = self._entry_urd_ime.text().strip()
         try:
             cena = float(self._entry_urd_cena.text().replace(",", "."))
+            if not isfinite(cena) or cena <= 0:
+                raise ValueError
         except ValueError:
-            QMessageBox.warning(self, "Greška", "Nevalidna cijena!")
+            QMessageBox.warning(self, "Greška", "Cijena mora biti broj veći od 0!")
             return
         try:
             kolicina = max(1, int(self._entry_kolicina.text().strip() or "1"))
@@ -375,8 +454,13 @@ class AdminPanel(QDialog):
         raw = self._entry_cijene[grupa].text().strip().replace(",", ".")
         try:
             cena = float(raw)
+            if not isfinite(cena) or cena <= 0:
+                raise ValueError
         except ValueError:
-            QMessageBox.warning(self, "Greška", f"Nevalidna cijena za grupu {grupa}!")
+            QMessageBox.warning(
+                self, "Greška",
+                f"Cijena za grupu {grupa} mora biti broj veći od 0!"
+            )
             return
         azurirano = postavi_cijenu_grupe(grupa, cena)
         QMessageBox.information(
@@ -481,7 +565,16 @@ class AdminPanel(QDialog):
         if len(nova) < 4:
             QMessageBox.warning(self, "Greška", "Lozinka mora imati najmanje 4 znaka!")
             return
-        promijeni_lozinku(nova)
+        try:
+            sacuvano = promijeni_lozinku(nova)
+        except Exception as e:
+            QMessageBox.critical(
+                self, "Greška", f"Lozinka nije promijenjena:\n{e}"
+            )
+            return
+        if not sacuvano:
+            QMessageBox.warning(self, "Greška", "Lozinka nije promijenjena!")
+            return
         QMessageBox.information(self, "Uspjeh", "Lozinka uspješno promijenjena!")
         self._entry_nova_loz.clear()
         self._entry_ponovi_loz.clear()

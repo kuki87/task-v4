@@ -1,0 +1,4 @@
+-r requirements.txt
+
+# Automatizovani regression testovi
+pytest>=8.0

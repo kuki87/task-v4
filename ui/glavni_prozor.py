@@ -317,7 +317,7 @@ class _MainWindow(QMainWindow):
     def _tick(self):
         for k in self.kartice:
             k.osvjezi()
-        self._bocni.osvjezi(self.kartice)
+        self._bocni.osvjezi_ako_promijenjeno(self.kartice)
         self._osvjezi_status_bar()
 
     # ── Status bar ─────────────────────────────────────────────
@@ -443,12 +443,18 @@ class _MainWindow(QMainWindow):
             QMessageBox.information(self, "Info", "Nema otvorene smjene.")
             return
 
-        aktivne_sesije = {k.ime: k.session for k in self.kartice if k.session is not None}
+        aktivne_sesije = {
+            k.ime: (k.session, k.kosarica, k.cena)
+            for k in self.kartice
+            if k.session is not None
+        }
         sank_kosarica = self._bocni.sank_kosarica
 
         upozorenja = []
         if aktivne_sesije:
-            upozorenja.append(f"• {len(aktivne_sesije)} aktivnih sesija bit će prekinuto")
+            upozorenja.append(
+                f"• {len(aktivne_sesije)} aktivnih sesija bit će naplaćeno i prekinuto"
+            )
         if sank_kosarica:
             upozorenja.append(f"• Šank košarica ({len(sank_kosarica)} stavki) bit će izgubljena!")
 
@@ -457,19 +463,23 @@ class _MainWindow(QMainWindow):
             if QMessageBox.question(self, "Zatvaranje smjene", poruka) != QMessageBox.StandardButton.Yes:
                 return
 
-        podaci_pazara = dohvati_pazar_smjene(smjena_id)
-        zatvori_smjenu(smjena_id, aktivne_sesije, sank_kosarica, podaci_pazara["ukupno"])
+        zatvori_smjenu(smjena_id, aktivne_sesije, sank_kosarica)
         upisi_log(smjena_id, self.state.ime_radnika, "-", "ZATVARANJE SMJENE")
 
         # Izvještaj
-        podaci_izvj = {"preneseni_racunari": list(aktivne_sesije.keys())}
+        podaci_izvj = {}
         try:
             from services.izvjestaj import generiši_tekstualni, generiši_pdf
             tekst = generiši_tekstualni(smjena_id, podaci_izvj)
             pdf_file = generiši_pdf(smjena_id, podaci_izvj)
             _PrikazIzvjestaja(self, tekst, pdf_file).exec()
-        except Exception:
-            pass
+        except Exception as e:
+            log.error(f"Izvještaj smjene {smjena_id} nije generisan ili prikazan: {e}")
+            QMessageBox.warning(
+                self, "Greška izvještaja",
+                "Smjena je uspješno zatvorena, ali izvještaj nije moguće "
+                f"generisati ili prikazati.\n\nGreška: {e}"
+            )
 
         # Reset
         self.state.zatvori_smjenu()

@@ -1,9 +1,13 @@
 from datetime import datetime
 from copy import deepcopy
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from database.db import get_db
 from models.session_state import SessionState
 from models.artikal import Artikal
+from services.pazar import naplati_uredjaj
+
+
+AktivnaSesija = Tuple[SessionState, List[Artikal], float]
 
 
 def otvori_smjenu(ime_radnika: str) -> int:
@@ -24,24 +28,44 @@ def otvori_smjenu(ime_radnika: str) -> int:
 
 def zatvori_smjenu(
     smjena_id: int,
-    aktivne_sesije: Dict[str, SessionState],
-    sank_kosarica: List[Artikal],
-    iznos_pazara: float
+    aktivne_sesije: Dict[str, AktivnaSesija],
+    sank_kosarica: List[Artikal]
 ) -> dict:
     conn = get_db()
     now = datetime.now().isoformat()
 
-    conn.execute(
-        "UPDATE smjene SET kraj = ?, pazar = ? WHERE id = ?",
-        (now, iznos_pazara, smjena_id)
-    )
-    conn.commit()
+    naplacene_sesije = {}
+    try:
+        for ime_uredjaja, (session, kosarica, cena_po_satu) in aktivne_sesije.items():
+            naplacene_sesije[ime_uredjaja] = naplati_uredjaj(
+                ime_uredjaja,
+                session,
+                kosarica,
+                cena_po_satu,
+                smjena_id,
+                commit=False,
+            )
+
+        row = conn.execute(
+            "SELECT COALESCE(SUM(iznos), 0) AS ukupno FROM pazar_arhiva WHERE smjena_id = ?",
+            (smjena_id,)
+        ).fetchone()
+        iznos_pazara = round(float(row["ukupno"]), 2)
+
+        conn.execute(
+            "UPDATE smjene SET kraj = ?, pazar = ? WHERE id = ?",
+            (now, iznos_pazara, smjena_id)
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
 
     return {
         "smjena_id": smjena_id,
         "kraj": now,
         "pazar": iznos_pazara,
-        "preneseni_racunari": list(aktivne_sesije.keys()),
+        "naplacene_sesije": naplacene_sesije,
         "sank_kosarica": sank_kosarica,
     }
 

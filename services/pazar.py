@@ -23,7 +23,9 @@ def naplati_uredjaj(
     session: SessionState,
     kosarica: List[Artikal],
     cena_po_satu: float,
-    smjena_id: int
+    smjena_id: int,
+    *,
+    commit: bool = True
 ) -> float:
     conn = get_db()
     now = datetime.now().isoformat()
@@ -40,20 +42,26 @@ def naplati_uredjaj(
     }
     tip_prodaje = tip_mapa.get(session.tip, "racunar")
 
+    # Zatvori aktivni zapis kreiran pri START-u.
+    cursor = conn.execute(
+        """UPDATE sesije_log
+           SET vreme_kraja = ?, iznos = ?
+           WHERE smjena_id = ? AND uredjaj = ? AND vreme_kraja IS NULL""",
+        (now, iznos_sesije, smjena_id, uredjaj_ime)
+    )
+    if cursor.rowcount == 0:
+        if commit:
+            conn.rollback()
+        raise RuntimeError(
+            f"Nije pronađena aktivna sesija za uređaj '{uredjaj_ime}' u smjeni {smjena_id}."
+        )
+
     # Upis sesije u pazar_arhiva
     conn.execute(
         """INSERT INTO pazar_arhiva (vreme, uredjaj, iznos, smjena_id, vreme_starta, tip_prodaje)
            VALUES (?, ?, ?, ?, ?, ?)""",
         (now, uredjaj_ime, iznos_sesije, smjena_id,
          session.vreme_starta.isoformat(), tip_prodaje)
-    )
-
-    # Upis sesije u sesije_log
-    conn.execute(
-        """INSERT INTO sesije_log (smjena_id, uredjaj, vreme_starta, vreme_kraja, iznos, tip)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (smjena_id, uredjaj_ime, session.vreme_starta.isoformat(), now,
-         iznos_sesije, session.tip)
     )
 
     # Naplata artikala iz košarice
@@ -72,7 +80,8 @@ def naplati_uredjaj(
             (uredjaj_ime, artikal.naziv, smjena_id)
         )
 
-    conn.commit()
+    if commit:
+        conn.commit()
     return round(iznos_sesije + ukupno_artikli, 2)
 
 
@@ -134,15 +143,79 @@ def dodaj_artikal_na_uredjaj(
     conn.commit()
 
 
-def start_sesija_prepaid(uredjaj: str, iznos: float, smjena_id: int, tip_prodaje: str) -> None:
+def prebaci_sesiju_na_uredjaj(
+    smjena_id: int,
+    radnik: str,
+    izvor_uredjaj: str,
+    cilj_uredjaj: str
+) -> None:
     conn = get_db()
     now = datetime.now().isoformat()
-    conn.execute(
-        """INSERT INTO pazar_arhiva (vreme, uredjaj, iznos, smjena_id, vreme_starta, tip_prodaje)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (now, uredjaj, iznos, smjena_id, now, tip_prodaje)
-    )
-    conn.commit()
+    try:
+        cilj_aktivan = conn.execute(
+            """SELECT 1 FROM sesije_log
+               WHERE uredjaj = ? AND vreme_kraja IS NULL
+               LIMIT 1""",
+            (cilj_uredjaj,)
+        ).fetchone()
+        if cilj_aktivan:
+            raise ValueError(f"Uređaj '{cilj_uredjaj}' već ima aktivnu sesiju.")
+
+        cursor = conn.execute(
+            """UPDATE sesije_log SET uredjaj = ?
+               WHERE smjena_id = ? AND uredjaj = ? AND vreme_kraja IS NULL""",
+            (cilj_uredjaj, smjena_id, izvor_uredjaj)
+        )
+        if cursor.rowcount != 1:
+            raise RuntimeError(
+                f"Aktivna sesija uređaja '{izvor_uredjaj}' nije pronađena ili nije jedinstvena."
+            )
+
+        conn.execute(
+            """UPDATE prodaja_artikala SET uredjaj = ?
+               WHERE smjena_id = ? AND uredjaj = ? AND naplaceno = 0""",
+            (cilj_uredjaj, smjena_id, izvor_uredjaj)
+        )
+        conn.execute(
+            """INSERT INTO logovi (vreme, smjena_id, radnik, uredjaj, akcija)
+               VALUES (?, ?, ?, ?, ?)""",
+            (now, smjena_id, radnik, izvor_uredjaj,
+             f"PRIJENOS → {cilj_uredjaj}")
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+
+
+def start_sesija(
+    uredjaj: str,
+    session: SessionState,
+    smjena_id: int,
+    iznos: float = 0.0
+) -> None:
+    conn = get_db()
+    vreme_starta = session.vreme_starta.isoformat()
+    try:
+        conn.execute(
+            """INSERT INTO sesije_log
+               (smjena_id, uredjaj, vreme_starta, vreme_kraja, iznos, tip)
+               VALUES (?, ?, ?, NULL, NULL, ?)""",
+            (smjena_id, uredjaj, vreme_starta, session.tip)
+        )
+
+        if session.tip in ("prepaid", "pass1", "pass2") and iznos > 0:
+            conn.execute(
+                """INSERT INTO pazar_arhiva
+                   (vreme, uredjaj, iznos, smjena_id, vreme_starta, tip_prodaje)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (vreme_starta, uredjaj, iznos, smjena_id,
+                 vreme_starta, session.tip)
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
 
 
 def dohvati_nenaplacene_artikle(smjena_id: int, uredjaj: str) -> list:

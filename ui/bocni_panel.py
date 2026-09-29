@@ -31,6 +31,7 @@ class BocniPanel(QFrame):
 
         self.sank_kosarica: list[Artikal] = []
         self._artikli_db: list = []
+        self._posljednje_stanje = None
 
         self._build_ui()
 
@@ -214,6 +215,30 @@ class BocniPanel(QFrame):
 
     # ── Osvježi ────────────────────────────────────────────────
 
+    def osvjezi_ako_promijenjeno(self, kartice: list):
+        if self._potpis_stanja(kartice) != self._posljednje_stanje:
+            self.osvjezi(kartice)
+
+    def _potpis_stanja(self, kartice: list):
+        aktivni = tuple(k.ime for k in kartice if k.session is not None)
+        izabrani = self._combo_uredjaj.currentText()
+        kartica = next((k for k in kartice if k.ime == izabrani), None)
+        kosarica_uredjaja = kartica.kosarica if kartica else []
+
+        def potpis_kosarice(kosarica):
+            return tuple(
+                (a.naziv, a.cijena, a.kolicina)
+                for a in kosarica
+            )
+
+        return (
+            self.smjena_id_getter() is not None,
+            aktivni,
+            izabrani,
+            potpis_kosarice(self.sank_kosarica),
+            potpis_kosarice(kosarica_uredjaja),
+        )
+
     def osvjezi(self, kartice: list):
         smjena_ok = self.smjena_id_getter() is not None
         self._btn_naplati_sank.setEnabled(smjena_ok)
@@ -238,6 +263,7 @@ class BocniPanel(QFrame):
 
         self._osvjezi_kosaricu_sank()
         self._osvjezi_kosaricu_uredjaj(kartice)
+        self._posljednje_stanje = self._potpis_stanja(kartice)
 
     def _refresh_btn_states(self, layout: QVBoxLayout, enabled: bool):
         for i in range(layout.count()):

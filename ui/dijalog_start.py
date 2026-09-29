@@ -1,5 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
+from math import isfinite
 from typing import Optional
 
 from PySide6.QtWidgets import (
@@ -125,7 +126,7 @@ class IzborStartaDijalog(QDialog):
         cijena = PASS2_PLACENIH_SATI * self.cena_po_satu
         tekst = (
             f"Plati {PASS2_PLACENIH_SATI}h → igra do kraja smjene\n"
-            f"Ulaz: {PASS2_ULAZ_OD}:00 – {PASS2_ULAZ_DO}:00\n"
+            f"Ulaz: {PASS2_ULAZ_OD}:00 – prije {PASS2_ULAZ_DO}:00\n"
             f"Cijena: {cijena:.2f} KM"
         )
         lbl = QLabel(tekst)
@@ -151,6 +152,13 @@ class IzborStartaDijalog(QDialog):
     # ── Confirm ────────────────────────────────────────────────
 
     def _potvrdi(self):
+        if not isfinite(self.cena_po_satu) or self.cena_po_satu <= 0:
+            QMessageBox.warning(
+                self, "Greška",
+                "Cijena uređaja mora biti broj veći od 0 KM/h."
+            )
+            return
+
         tab_name = self._tabs.tabText(self._tabs.currentIndex())
 
         if tab_name == "Neograničeno":
@@ -159,7 +167,7 @@ class IzborStartaDijalog(QDialog):
         elif tab_name == "Unaprijed":
             try:
                 iznos = float(self._entry_prepaid.text().replace(",", "."))
-                if iznos <= 0:
+                if not isfinite(iznos) or iznos <= 0:
                     raise ValueError
             except ValueError:
                 QMessageBox.warning(self, "Greška", "Unesite validan iznos (npr. 5.00)")
@@ -177,7 +185,7 @@ class IzborStartaDijalog(QDialog):
             if not (PASS2_ULAZ_OD <= sad < PASS2_ULAZ_DO):
                 QMessageBox.warning(
                     self, "Greška",
-                    f"Pass 2 dostupan samo između {PASS2_ULAZ_OD}:00 i {PASS2_ULAZ_DO}:00!"
+                    f"Pass 2 je dostupan od {PASS2_ULAZ_OD}:00 do prije {PASS2_ULAZ_DO}:00."
                 )
                 return
             iznos = PASS2_PLACENIH_SATI * self.cena_po_satu
