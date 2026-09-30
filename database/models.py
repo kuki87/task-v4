@@ -27,7 +27,8 @@ def kreiraj_tabele(conn: sqlite3.Connection):
             vreme_starta TEXT,
             vreme_kraja TEXT,
             iznos REAL,
-            tip TEXT
+            tip TEXT,
+            limit_sekundi INTEGER
         )
     """)
 
@@ -110,6 +111,13 @@ def pokreni_migracije(conn: sqlite3.Connection):
         if ime_kolone not in postojece_kolone:
             c.execute(f"ALTER TABLE uredjaji ADD COLUMN {ime_kolone} {definicija}")
     conn.commit()
+
+    # Migracija: sačuvaj vremenski limit aktivne prepaid/pass sesije za recovery
+    c.execute("PRAGMA table_info(sesije_log)")
+    kolone_sesije = {red["name"] for red in c.fetchall()}
+    if "limit_sekundi" not in kolone_sesije:
+        c.execute("ALTER TABLE sesije_log ADD COLUMN limit_sekundi INTEGER")
+        conn.commit()
 
     # Migracija: ispravi PS5 uređaje koji su dobili grupu 'Classic' po defaultu
     c.execute("UPDATE uredjaji SET grupa = 'PS5' WHERE tip = 'PS5' AND grupa = 'Classic'")

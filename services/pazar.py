@@ -199,9 +199,16 @@ def start_sesija(
     try:
         conn.execute(
             """INSERT INTO sesije_log
-               (smjena_id, uredjaj, vreme_starta, vreme_kraja, iznos, tip)
-               VALUES (?, ?, ?, NULL, NULL, ?)""",
-            (smjena_id, uredjaj, vreme_starta, session.tip)
+               (smjena_id, uredjaj, vreme_starta, vreme_kraja, iznos, tip,
+                limit_sekundi)
+               VALUES (?, ?, ?, NULL, NULL, ?, ?)""",
+            (
+                smjena_id,
+                uredjaj,
+                vreme_starta,
+                session.tip,
+                session.limit_sekundi,
+            )
         )
 
         if session.tip in ("prepaid", "pass1", "pass2") and iznos > 0:
@@ -218,12 +225,29 @@ def start_sesija(
         raise
 
 
-def dohvati_nenaplacene_artikle(smjena_id: int, uredjaj: str) -> list:
+def dohvati_nenaplacene_artikle(
+    smjena_id: int,
+    uredjaj: str,
+) -> List[Artikal]:
     conn = get_db()
     rows = conn.execute(
         """SELECT naziv_artikla, kolicina, ukupna_cijena
            FROM prodaja_artikala
-           WHERE smjena_id = ? AND uredjaj = ? AND naplaceno = 0""",
+           WHERE smjena_id = ? AND uredjaj = ? AND naplaceno = 0
+           ORDER BY id""",
         (smjena_id, uredjaj)
     ).fetchall()
-    return [dict(r) for r in rows]
+
+    agregirani = {}
+    for row in rows:
+        kolicina = int(row["kolicina"])
+        if kolicina <= 0:
+            continue
+        cijena = round(float(row["ukupna_cijena"]) / kolicina, 10)
+        kljuc = (row["naziv_artikla"], cijena)
+        agregirani[kljuc] = agregirani.get(kljuc, 0) + kolicina
+
+    return [
+        Artikal(naziv, cijena, kolicina)
+        for (naziv, cijena), kolicina in agregirani.items()
+    ]

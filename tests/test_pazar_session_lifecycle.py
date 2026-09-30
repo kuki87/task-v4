@@ -74,9 +74,7 @@ def test_ponovljeno_dodavanje_artikla_cuva_sve_komade_do_naplate(db):
     nenaplaceni = pazar_service.dohvati_nenaplacene_artikle(
         smjena_id, "PC 1"
     )
-    assert len(nenaplaceni) == 3
-    assert sum(red["kolicina"] for red in nenaplaceni) == 3
-    assert sum(red["ukupna_cijena"] for red in nenaplaceni) == pytest.approx(4.50)
+    assert nenaplaceni == [Artikal("Kafa", 1.50, 3)]
 
     pazar_service.naplati_uredjaj(
         "PC 1",

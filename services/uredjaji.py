@@ -46,7 +46,7 @@ def seed_uredjaje_ako_prazno(podrazumijevani: list) -> None:
 def dohvati_aktivne_sesije(smjena_id: int) -> list:
     conn = get_db()
     return conn.execute(
-        """SELECT uredjaj, vreme_starta, tip FROM sesije_log
+        """SELECT uredjaj, vreme_starta, tip, limit_sekundi FROM sesije_log
            WHERE smjena_id = ? AND vreme_kraja IS NULL""",
         (smjena_id,)
     ).fetchall()

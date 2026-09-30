@@ -21,7 +21,7 @@ from PySide6.QtGui import QFont, QColor
 from database.db import inicijalizuj_bazu
 from services.uredjaji import seed_uredjaje_ako_prazno, ucitaj_uredjaje, dohvati_aktivne_sesije
 from services.smjena import otvori_smjenu, zatvori_smjenu, dohvati_aktivnu_smjenu
-from services.pazar import dohvati_pazar_smjene
+from services.pazar import dohvati_nenaplacene_artikle, dohvati_pazar_smjene
 from services.logger import upisi_log, log
 from models.app_state import AppState
 from models.session_state import SessionState
@@ -362,19 +362,43 @@ class _MainWindow(QMainWindow):
 
     def _obnovi_aktivne_sesije(self, smjena_id: int):
         aktivne = dohvati_aktivne_sesije(smjena_id)
+        nepostojeci_uredjaji = []
         for row in aktivne:
             kartica = next((k for k in self.kartice if k.ime == row["uredjaj"]), None)
-            if kartica and kartica.session is None:
-                tip = row["tip"] or "neograniceno"
-                vreme = datetime.fromisoformat(row["vreme_starta"])
-                kartica.session = SessionState(
-                    vreme_starta=vreme, tip=tip,
-                    is_prepaid=(tip == "prepaid"),
-                    is_pass2=(tip == "pass2"),
-                    is_minecraft=(tip == "minecraft"),
+            if kartica is None:
+                nepostojeci_uredjaji.append(row["uredjaj"])
+                log.error(
+                    f"Aktivna sesija za uređaj '{row['uredjaj']}' nije obnovljena "
+                    "jer uređaj više ne postoji."
                 )
-                self._session_cache[kartica.ime] = (kartica.session, kartica.kosarica)
-                kartica.osvjezi()
+                continue
+            if kartica.session is not None:
+                continue
+
+            tip = row["tip"] or "neograniceno"
+            vreme = datetime.fromisoformat(row["vreme_starta"])
+            kartica.session = SessionState(
+                vreme_starta=vreme,
+                limit_sekundi=row["limit_sekundi"],
+                tip=tip,
+                is_prepaid=(tip == "prepaid"),
+                is_pass2=(tip == "pass2"),
+                is_minecraft=(tip == "minecraft"),
+            )
+            kartica.kosarica = dohvati_nenaplacene_artikle(
+                smjena_id, kartica.ime
+            )
+            self._session_cache[kartica.ime] = (kartica.session, kartica.kosarica)
+            kartica.osvjezi()
+
+        if nepostojeci_uredjaji:
+            QMessageBox.warning(
+                self,
+                "Neobnovljene sesije",
+                "U bazi postoje aktivne sesije za uređaje koji više ne postoje:\n\n"
+                "  • " + "\n  • ".join(nepostojeci_uredjaji)
+                + "\n\nZapisi su ostali u bazi i zahtijevaju ručnu provjeru.",
+            )
 
     def _otvori_smjenu_dijalog(self):
         if self.state.je_smjena_otvorena():
