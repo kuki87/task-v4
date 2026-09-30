@@ -7,7 +7,7 @@ evidenciji pazara, prodaji artikala, praćenju gaming uređaja i generisanju izv
 
 ## Ključne funkcionalnosti
 
-* **Smjene** — otvaranje i zatvaranje smjene po radniku, prenos aktivnih sesija i nenaplaćenih artikala u novu smjenu.
+* **Smjene** — otvaranje i zatvaranje smjene po radniku, uz naplatu svih aktivnih sesija pri zatvaranju.
 * **Uređaji** — PC i PS5 stanice grupisane po grupama, praćenje vremena i obračun po satu.
 * **Pass sistemi** — Neograničeno, Prepaid, Pass 1, Pass 2 i Minecraft pass.
 * **Šank** — zasebna košarica za prodaju artikala koji nisu vezani za uređaj.
@@ -80,7 +80,7 @@ task v4.0/
 │
 ├── services/                # Poslovna logika, jedini sloj koji dira bazu
 │   ├── pazar.py             # Obračun sesija, naplata, arhiva pazara
-│   ├── smjena.py            # Otvaranje, zatvaranje i prenos smjene
+│   ├── smjena.py            # Otvaranje i zatvaranje smjene
 │   ├── uredjaji.py          # CRUD uređaja, cijene grupa, logovi
 │   ├── artikli.py           # CRUD artikala
 │   ├── auth.py              # Admin lozinka (PBKDF2-SHA256)

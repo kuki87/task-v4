@@ -1,5 +1,4 @@
 from datetime import datetime
-from copy import deepcopy
 from typing import Dict, List, Optional, Tuple
 from database.db import get_db
 from models.session_state import SessionState
@@ -68,35 +67,6 @@ def zatvori_smjenu(
         "naplacene_sesije": naplacene_sesije,
         "sank_kosarica": sank_kosarica,
     }
-
-
-def prenesi_u_novu_smjenu(
-    aktivne_sesije: Dict[str, SessionState],
-    nenaplaceni_po_uredjaju: Dict[str, List[Artikal]],
-    novi_smjena_id: int
-) -> Dict[str, SessionState]:
-    conn = get_db()
-    now = datetime.now().isoformat()
-
-    nove_sesije = {}
-    for ime_uredjaja, session in aktivne_sesije.items():
-        nova_sesija = deepcopy(session)
-        # Kosarica se prenosi
-        nova_sesija.kosarica = deepcopy(nenaplaceni_po_uredjaju.get(ime_uredjaja, []))
-        nove_sesije[ime_uredjaja] = nova_sesija
-
-        # Upisi prenesene artikle u novu smjenu
-        for artikal in nova_sesija.kosarica:
-            conn.execute(
-                """INSERT INTO prodaja_artikala
-                   (vreme, smjena_id, uredjaj, naziv_artikla, kolicina, ukupna_cijena, naplaceno)
-                   VALUES (?, ?, ?, ?, ?, ?, 0)""",
-                (now, novi_smjena_id, ime_uredjaja,
-                 artikal.naziv, artikal.kolicina, artikal.ukupno())
-            )
-
-    conn.commit()
-    return nove_sesije
 
 
 def dohvati_aktivnu_smjenu() -> Optional[dict]:
