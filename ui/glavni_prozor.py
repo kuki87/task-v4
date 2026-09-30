@@ -65,6 +65,7 @@ class _MainWindow(QMainWindow):
         self._svi_uredjaji: list = []
         self._session_cache: dict = {}
         self._pazar_dlg: Optional[QDialog] = None
+        self._historija_dlg: Optional[QDialog] = None
 
         inicijalizuj_bazu()
         self._seed_uredjaje()
@@ -150,6 +151,7 @@ class _MainWindow(QMainWindow):
         for txt, slot in [
             ("Smjena",  self._meni_smjena),
             ("Pazar",   self._otvori_pazar),
+            ("Sesije",  self._otvori_historiju_sesija),
             ("Admin",   self._otvori_admin),
         ]:
             btn = QPushButton(txt)
@@ -530,6 +532,13 @@ class _MainWindow(QMainWindow):
             self._pazar_dlg.raise_()
             return
         self._pazar_dlg = PrikazPazara(self, smjena_id_getter=lambda: self.state.trenutna_smjena_id)
+
+    def _otvori_historiju_sesija(self):
+        from ui.historija_sesija import HistorijaSesijaDijalog
+        if self._historija_dlg and not self._historija_dlg.isHidden():
+            self._historija_dlg.raise_()
+            return
+        self._historija_dlg = HistorijaSesijaDijalog(self)
 
     def _otvori_admin(self):
         from ui.admin_panel import AdminPanel

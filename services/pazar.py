@@ -240,6 +240,153 @@ def dohvati_dashboard_smjene(
     }
 
 
+def dohvati_historiju_sesija(
+    *,
+    datum_od: str | None = None,
+    datum_do: str | None = None,
+    uredjaj: str | None = None,
+    tip: str | None = None,
+    status: str | None = None,
+    pretraga: str | None = None,
+    limit: int = 100,
+    offset: int = 0,
+) -> dict:
+    """Vrati filtriranu stranicu sesija bez izmjene finansijskih zapisa."""
+    conn = get_db()
+    limit = max(1, min(int(limit), 200))
+    offset = max(0, int(offset))
+
+    uslovi = []
+    parametri = []
+    if datum_od:
+        uslovi.append("date(s.vreme_starta) >= date(?)")
+        parametri.append(datum_od)
+    if datum_do:
+        uslovi.append("date(s.vreme_starta) <= date(?)")
+        parametri.append(datum_do)
+    if uredjaj:
+        uslovi.append("s.uredjaj = ?")
+        parametri.append(uredjaj)
+    if tip:
+        uslovi.append("s.tip = ?")
+        parametri.append(tip)
+    if status == "aktivna":
+        uslovi.append("s.vreme_kraja IS NULL")
+    elif status == "zavrsena":
+        uslovi.append("s.vreme_kraja IS NOT NULL")
+    elif status not in (None, "", "sve"):
+        raise ValueError("Status mora biti 'aktivna', 'zavrsena' ili 'sve'.")
+    if pretraga and pretraga.strip():
+        obrazac = f"%{pretraga.strip().lower()}%"
+        uslovi.append(
+            "(LOWER(COALESCE(s.uredjaj, '')) LIKE ? "
+            "OR LOWER(COALESCE(s.tip, '')) LIKE ? "
+            "OR LOWER(COALESCE(sm.radnik, '')) LIKE ? "
+            "OR CAST(s.id AS TEXT) LIKE ?)"
+        )
+        parametri.extend([obrazac, obrazac, obrazac, obrazac])
+
+    where_sql = " WHERE " + " AND ".join(uslovi) if uslovi else ""
+    from_sql = (
+        " FROM sesije_log s "
+        "LEFT JOIN smjene sm ON sm.id = s.smjena_id"
+    )
+    ukupno = conn.execute(
+        "SELECT COUNT(*)" + from_sql + where_sql,
+        tuple(parametri),
+    ).fetchone()[0]
+
+    stranica_sql = (
+        "SELECT s.id, s.smjena_id, s.uredjaj, s.vreme_starta, "
+        "s.vreme_kraja, s.iznos, s.tip, s.limit_sekundi, sm.radnik"
+        + from_sql
+        + where_sql
+        + " ORDER BY s.vreme_starta DESC, s.id DESC LIMIT ? OFFSET ?"
+    )
+    redovi = conn.execute(
+        """WITH stranica AS ("""
+        + stranica_sql
+        + """
+        )
+        SELECT s.*,
+               CASE
+                   WHEN SUM(CASE WHEN p.tip_prodaje NOT IN ('artikal', 'sank')
+                                      THEN 1 ELSE 0 END) > 0
+                   THEN COALESCE(SUM(CASE
+                       WHEN p.tip_prodaje NOT IN ('artikal', 'sank')
+                       THEN p.iznos ELSE 0 END), 0)
+                   ELSE COALESCE(s.iznos, 0)
+               END AS iznos_racunara,
+               COALESCE(SUM(CASE WHEN p.tip_prodaje = 'artikal'
+                                 THEN p.iznos ELSE 0 END), 0) AS iznos_artikala
+        FROM stranica s
+        LEFT JOIN pazar_arhiva p
+          ON p.smjena_id = s.smjena_id
+         AND p.vreme_starta = s.vreme_starta
+        GROUP BY s.id, s.smjena_id, s.uredjaj, s.vreme_starta,
+                 s.vreme_kraja, s.iznos, s.tip, s.limit_sekundi, s.radnik
+        ORDER BY s.vreme_starta DESC, s.id DESC
+        """,
+        tuple(parametri) + (limit, offset),
+    ).fetchall()
+
+    sada = datetime.now()
+    stavke = []
+    for row in redovi:
+        stavka = dict(row)
+        pocetak = _parse_iso_vrijeme(stavka["vreme_starta"])
+        kraj = _parse_iso_vrijeme(stavka["vreme_kraja"])
+        referentno_vrijeme = kraj or sada
+        trajanje = None
+        if pocetak is not None:
+            trajanje = max(0, int((referentno_vrijeme - pocetak).total_seconds()))
+
+        stavka["status"] = "aktivna" if stavka["vreme_kraja"] is None else "zavrsena"
+        stavka["trajanje_sekundi"] = trajanje
+        stavka["iznos_racunara"] = round(float(stavka["iznos_racunara"]), 2)
+        stavka["iznos_artikala"] = round(float(stavka["iznos_artikala"]), 2)
+        stavka["ukupno"] = round(
+            stavka["iznos_racunara"] + stavka["iznos_artikala"], 2
+        )
+        stavka["artikli_detalji_dostupni"] = False
+        stavke.append(stavka)
+
+    return {
+        "stavke": stavke,
+        "ukupno": int(ukupno),
+        "limit": limit,
+        "offset": offset,
+    }
+
+
+def dohvati_opcije_historije_sesija() -> dict:
+    """Vrati historijske uređaje i tipove za filtere."""
+    conn = get_db()
+    uredjaji = conn.execute(
+        """SELECT DISTINCT uredjaj FROM sesije_log
+           WHERE uredjaj IS NOT NULL AND TRIM(uredjaj) <> ''
+           ORDER BY uredjaj COLLATE NOCASE"""
+    ).fetchall()
+    tipovi = conn.execute(
+        """SELECT DISTINCT tip FROM sesije_log
+           WHERE tip IS NOT NULL AND TRIM(tip) <> ''
+           ORDER BY tip COLLATE NOCASE"""
+    ).fetchall()
+    return {
+        "uredjaji": [row["uredjaj"] for row in uredjaji],
+        "tipovi": [row["tip"] for row in tipovi],
+    }
+
+
+def _parse_iso_vrijeme(vrijednost):
+    if not vrijednost:
+        return None
+    try:
+        return datetime.fromisoformat(vrijednost)
+    except (TypeError, ValueError):
+        return None
+
+
 def dodaj_artikal_na_uredjaj(
     smjena_id: int,
     uredjaj: str,
