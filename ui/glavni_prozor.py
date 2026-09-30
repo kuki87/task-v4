@@ -126,7 +126,7 @@ class _MainWindow(QMainWindow):
             radnik_getter=lambda: self.state.ime_radnika,
             parent=self,
         )
-        self._bocni.pazar_changed.connect(self._osvjezi_status_bar)
+        self._bocni.pazar_changed.connect(self._pazar_promijenjen)
         content_lay.addWidget(self._bocni)
 
         root_lay.addWidget(content, 1)
@@ -274,7 +274,7 @@ class _MainWindow(QMainWindow):
                     state=self.state,
                     get_sve_uredjaje=lambda: self.kartice,
                 )
-                kartica.pazar_changed.connect(self._osvjezi_status_bar)
+                kartica.pazar_changed.connect(self._pazar_promijenjen)
                 if row_lay is not None:
                     row_lay.addWidget(kartica)
                 self.kartice.append(kartica)
@@ -318,7 +318,6 @@ class _MainWindow(QMainWindow):
         for k in self.kartice:
             k.osvjezi()
         self._bocni.osvjezi_ako_promijenjeno(self.kartice)
-        self._osvjezi_status_bar()
 
     # ── Status bar ─────────────────────────────────────────────
 
@@ -338,6 +337,14 @@ class _MainWindow(QMainWindow):
         self._lbl_aktivno.setText(f"{aktivni}/{ukupno} aktivno")
         self._lbl_pazar.setText(f"{podaci['ukupno']:.2f} KM")
 
+    def _pazar_promijenjen(self):
+        """Osvježi finansije i dashboard samo nakon poslovnog događaja."""
+        self._osvjezi_status_bar()
+        if self._pazar_dlg and not self._pazar_dlg.isHidden():
+            osvjezi = getattr(self._pazar_dlg, "osvjezi_podatke", None)
+            if osvjezi is not None:
+                osvjezi()
+
     # ── Smjena ─────────────────────────────────────────────────
 
     def _provjeri_smjenu(self):
@@ -354,7 +361,7 @@ class _MainWindow(QMainWindow):
         )
         if odg == QMessageBox.StandardButton.Yes:
             self.state.postavi_smjenu(aktivna["id"], aktivna["radnik"])
-            self._osvjezi_status_bar()
+            self._pazar_promijenjen()
             self._obnovi_aktivne_sesije(aktivna["id"])
             for k in self.kartice:
                 k.osvjezi()
@@ -435,7 +442,7 @@ class _MainWindow(QMainWindow):
                     )
                     if odg == QMessageBox.StandardButton.Yes:
                         self.state.postavi_smjenu(aktivna["id"], aktivna["radnik"])
-                        self._osvjezi_status_bar()
+                        self._pazar_promijenjen()
                         self._obnovi_aktivne_sesije(aktivna["id"])
                         for k in self.kartice:
                             k.osvjezi()
@@ -447,7 +454,7 @@ class _MainWindow(QMainWindow):
                     return
                 self.state.postavi_smjenu(smjena_id, ime)
                 upisi_log(smjena_id, ime, "-", "OTVARANJE SMJENE")
-                self._osvjezi_status_bar()
+                self._pazar_promijenjen()
                 return
             odg = QMessageBox.question(self, "Info", "Morate otvoriti smjenu. Pokušati ponovo?")
             if odg != QMessageBox.StandardButton.Yes:
@@ -513,7 +520,7 @@ class _MainWindow(QMainWindow):
             k.kosarica = []
             k.osvjezi()
         self._bocni.sank_kosarica = []
-        self._osvjezi_status_bar()
+        self._pazar_promijenjen()
 
     # ── Pazar / Admin ──────────────────────────────────────────
 

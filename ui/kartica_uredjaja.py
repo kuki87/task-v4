@@ -274,8 +274,7 @@ class UredjajKartica(QWidget):
 
         self.session = nova_sesija
         self.kosarica = []
-        if tip in ("prepaid", "pass1", "pass2") and iznos_starta > 0:
-            self.pazar_changed.emit()
+        self.pazar_changed.emit()
 
         from services.logger import upisi_log
         upisi_log(smjena_id, radnik, self.ime, f"START — {tip.upper()}")
@@ -344,6 +343,7 @@ class UredjajKartica(QWidget):
         self.kosarica = []
         self.osvjezi()
         cilj.osvjezi()
+        self.pazar_changed.emit()
 
     def dodaj_u_kosaricu(self, artikal: Artikal):
         for a in self.kosarica:

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 from database.db import get_db
 from models.session_state import SessionState
@@ -122,6 +122,121 @@ def dohvati_pazar_smjene(smjena_id: int) -> dict:
         "artikli": round(artikli, 2),
         "sank": round(sank, 2),
         "transakcije": [dict(r) for r in rows],
+    }
+
+
+def dohvati_dashboard_smjene(
+    smjena_id: int,
+    uskoro_prag_sekundi: int = 15 * 60,
+) -> dict:
+    """Vrati read-only operativni presjek jedne smjene."""
+    conn = get_db()
+    pazar = dohvati_pazar_smjene(smjena_id)
+
+    smjena = conn.execute(
+        "SELECT pocetak, kraj, radnik FROM smjene WHERE id = ?",
+        (smjena_id,),
+    ).fetchone()
+
+    uredjaji = conn.execute(
+        "SELECT ime FROM uredjaji ORDER BY ime"
+    ).fetchall()
+    imena_uredjaja = {row["ime"] for row in uredjaji}
+
+    aktivni_redovi = conn.execute(
+        """SELECT uredjaj, vreme_starta, tip, limit_sekundi
+           FROM sesije_log
+           WHERE smjena_id = ? AND vreme_kraja IS NULL
+           ORDER BY vreme_starta, id""",
+        (smjena_id,),
+    ).fetchall()
+    aktivni_redovi = [
+        row for row in aktivni_redovi if row["uredjaj"] in imena_uredjaja
+    ]
+    aktivna_imena = {row["uredjaj"] for row in aktivni_redovi}
+
+    prepaid_pass_imena = {
+        row["uredjaj"]
+        for row in aktivni_redovi
+        if row["tip"] in ("prepaid", "pass1", "pass2")
+    }
+
+    sada = datetime.now()
+    uskoro_isticu = []
+    for row in aktivni_redovi:
+        if row["limit_sekundi"] is None:
+            continue
+        try:
+            vreme_starta = datetime.fromisoformat(row["vreme_starta"])
+        except (TypeError, ValueError):
+            continue
+        vreme_isteka = vreme_starta + timedelta(
+            seconds=int(row["limit_sekundi"])
+        )
+        preostalo = max(0, int((vreme_isteka - sada).total_seconds()))
+        if preostalo <= uskoro_prag_sekundi:
+            uskoro_isticu.append({
+                "uredjaj": row["uredjaj"],
+                "tip": row["tip"] or "neograniceno",
+                "vreme_isteka": vreme_isteka.isoformat(),
+                "preostalo_sekundi": preostalo,
+            })
+    uskoro_isticu.sort(
+        key=lambda red: (red["preostalo_sekundi"], red["uredjaj"])
+    )
+
+    top_artikli = conn.execute(
+        """SELECT naziv_artikla,
+                  SUM(kolicina) AS kolicina,
+                  ROUND(SUM(ukupna_cijena), 2) AS ukupno
+           FROM prodaja_artikala
+           WHERE smjena_id = ? AND naplaceno = 1
+           GROUP BY naziv_artikla
+           ORDER BY kolicina DESC, ukupno DESC, naziv_artikla ASC
+           LIMIT 5""",
+        (smjena_id,),
+    ).fetchall()
+    top_artikli = [dict(row) for row in top_artikli]
+    broj_prodanih_artikala = sum(
+        int(row["kolicina"]) for row in top_artikli
+    )
+    if len(top_artikli) == 5:
+        red = conn.execute(
+            """SELECT COALESCE(SUM(kolicina), 0) AS kolicina
+               FROM prodaja_artikala
+               WHERE smjena_id = ? AND naplaceno = 1""",
+            (smjena_id,),
+        ).fetchone()
+        broj_prodanih_artikala = int(red["kolicina"])
+
+    kretanje_pazara = []
+    kumulativno = 0.0
+    for transakcija in reversed(pazar["transakcije"]):
+        kumulativno = round(kumulativno + float(transakcija["iznos"]), 2)
+        kretanje_pazara.append({
+            "vreme": transakcija["vreme"],
+            "ukupno": kumulativno,
+        })
+
+    return {
+        "smjena_id": smjena_id,
+        "pocetak_smjene": smjena["pocetak"] if smjena else None,
+        "kraj_smjene": smjena["kraj"] if smjena else None,
+        "radnik": smjena["radnik"] if smjena else None,
+        "ukupno": pazar["ukupno"],
+        "racunari": pazar["racunari"],
+        "artikli": pazar["artikli"],
+        "sank": pazar["sank"],
+        "broj_transakcija": len(pazar["transakcije"]),
+        "posljednje_transakcije": pazar["transakcije"][:5],
+        "ukupno_uredjaja": len(imena_uredjaja),
+        "aktivni_uredjaji": len(aktivna_imena),
+        "slobodni_uredjaji": max(0, len(imena_uredjaja) - len(aktivna_imena)),
+        "aktivne_prepaid_pass": len(prepaid_pass_imena),
+        "uskoro_isticu": uskoro_isticu,
+        "broj_prodanih_artikala": broj_prodanih_artikala,
+        "top_artikli": top_artikli,
+        "kretanje_pazara": kretanje_pazara[-20:],
     }
 
 
