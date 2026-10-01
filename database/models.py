@@ -119,6 +119,35 @@ def pokreni_migracije(conn: sqlite3.Connection):
         c.execute("ALTER TABLE sesije_log ADD COLUMN limit_sekundi INTEGER")
         conn.commit()
 
+    # Migracija: rezervacije su vezane za stabilni ID uređaja, a historija se čuva.
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS rezervacije (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            uredjaj_id INTEGER NOT NULL,
+            ime_gosta TEXT NOT NULL CHECK (TRIM(ime_gosta) <> ''),
+            telefon TEXT,
+            pocetak TEXT NOT NULL,
+            kraj TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'rezervisano'
+                CHECK (status IN ('rezervisano', 'stigao', 'zavrseno', 'otkazano', 'no_show')),
+            napomena TEXT,
+            kreirano TEXT NOT NULL,
+            izmijenjeno TEXT NOT NULL,
+            kreirao_radnik TEXT NOT NULL,
+            FOREIGN KEY (uredjaj_id) REFERENCES uredjaji(id) ON DELETE RESTRICT,
+            CHECK (pocetak < kraj)
+        )
+    """)
+    c.execute("""
+        CREATE INDEX IF NOT EXISTS idx_rezervacije_uredjaj_termin
+        ON rezervacije (uredjaj_id, pocetak, kraj)
+    """)
+    c.execute("""
+        CREATE INDEX IF NOT EXISTS idx_rezervacije_pocetak_status
+        ON rezervacije (pocetak, status)
+    """)
+    conn.commit()
+
     # Migracija: ispravi PS5 uređaje koji su dobili grupu 'Classic' po defaultu
     c.execute("UPDATE uredjaji SET grupa = 'PS5' WHERE tip = 'PS5' AND grupa = 'Classic'")
     conn.commit()

@@ -1,5 +1,7 @@
+from datetime import datetime
 from typing import Optional
 from database.db import get_db
+from services.rezervacije import STATUS_REZERVISANO, STATUS_STIGAO
 
 
 def ucitaj_uredjaje() -> list:
@@ -20,6 +22,20 @@ def dodaj_uredjaj(ime: str, cena: float, tip: str, grupa: str = "Classic") -> No
 
 def brisi_uredjaj(uid: int) -> None:
     conn = get_db()
+    rezervacije = conn.execute(
+        "SELECT COUNT(*) FROM rezervacije WHERE uredjaj_id = ?", (uid,)
+    ).fetchone()[0]
+    if rezervacije:
+        aktivne = conn.execute(
+            """SELECT COUNT(*) FROM rezervacije
+               WHERE uredjaj_id = ? AND status IN (?, ?) AND kraj > ?""",
+            (uid, STATUS_REZERVISANO, STATUS_STIGAO, datetime.now().isoformat()),
+        ).fetchone()[0]
+        if aktivne:
+            raise ValueError(
+                "Uređaj ima buduću ili aktivnu rezervaciju i ne može biti obrisan."
+            )
+        raise ValueError("Uređaj ima historiju rezervacija i ne može biti obrisan.")
     conn.execute("DELETE FROM uredjaji WHERE id = ?", (uid,))
     conn.commit()
 

@@ -24,14 +24,19 @@ if not log.handlers:
     log.addHandler(_handler)
 
 
+def upisi_log_u_transakciji(conn, smjena_id, radnik: str, uredjaj: str, akcija: str):
+    """Upiši audit zapis koristeći transakciju pozivaoca, bez commit-a."""
+    now = datetime.now().isoformat()
+    conn.execute(
+        "INSERT INTO logovi (vreme, smjena_id, radnik, uredjaj, akcija) VALUES (?, ?, ?, ?, ?)",
+        (now, smjena_id, radnik, uredjaj, akcija),
+    )
+
+
 def upisi_log(smjena_id, radnik: str, uredjaj: str, akcija: str):
     try:
         conn = get_db()
-        now = datetime.now().isoformat()
-        conn.execute(
-            "INSERT INTO logovi (vreme, smjena_id, radnik, uredjaj, akcija) VALUES (?, ?, ?, ?, ?)",
-            (now, smjena_id, radnik, uredjaj, akcija)
-        )
+        upisi_log_u_transakciji(conn, smjena_id, radnik, uredjaj, akcija)
         conn.commit()
     except Exception as e:
         log.error(f"Greška pri upisivanju loga: {e}")

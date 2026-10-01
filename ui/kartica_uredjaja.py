@@ -66,11 +66,13 @@ class UredjajKartica(QWidget):
         state: AppState,
         get_sve_uredjaje: Callable,
         parent=None,
+        uredjaj_id: Optional[int] = None,
     ):
         super().__init__(parent)
         self.setFixedWidth(160)
 
         self.ime = ime
+        self.uredjaj_id = uredjaj_id
         self.tip = tip.upper()
         self.cena = cena
         self.state = state
@@ -140,6 +142,14 @@ class UredjajKartica(QWidget):
         self._lbl_kosarica.setObjectName("cardKosarica")
         self._lbl_kosarica.setAlignment(Qt.AlignmentFlag.AlignCenter)
         root.addWidget(self._lbl_kosarica)
+
+        self._lbl_rezervacija = QLabel("")
+        self._lbl_rezervacija.setObjectName("cardRezervacija")
+        self._lbl_rezervacija.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._lbl_rezervacija.setWordWrap(True)
+        self._lbl_rezervacija.setStyleSheet("color: #f59e0b; font-size: 10px;")
+        self._lbl_rezervacija.hide()
+        root.addWidget(self._lbl_rezervacija)
 
         root.addStretch(1)
 
@@ -239,6 +249,44 @@ class UredjajKartica(QWidget):
         self._lbl_icon.setStyleSheet(f"color: {icon_c}; font-size: 22px;")
         self._lbl_earning.setStyleSheet(f"color: {earn_c};")
 
+    def postavi_narednu_rezervaciju(self, rezervacija) -> None:
+        if rezervacija is None:
+            self._lbl_rezervacija.clear()
+            self._lbl_rezervacija.hide()
+            return
+        pocetak = datetime.fromisoformat(rezervacija["pocetak"])
+        self._lbl_rezervacija.setText(
+            f"Rezervacija {pocetak:%H:%M} — {rezervacija['ime_gosta']}"
+        )
+        self._lbl_rezervacija.show()
+
+    def _potvrdi_start_uz_rezervaciju(self, rezultat: dict) -> bool:
+        if self.uredjaj_id is None:
+            return True
+        from services.rezervacije import dohvati_narednu_rezervaciju_uredjaja
+
+        rezervacija = dohvati_narednu_rezervaciju_uredjaja(self.uredjaj_id)
+        if rezervacija is None:
+            return True
+        sada = datetime.now()
+        pocetak = datetime.fromisoformat(rezervacija["pocetak"])
+        kraj = datetime.fromisoformat(rezervacija["kraj"])
+        limit = rezultat.get("limit_sekundi")
+        preklapa = pocetak <= sada < kraj
+        if limit is not None:
+            preklapa = preklapa or sada.timestamp() + limit > pocetak.timestamp()
+        else:
+            preklapa = preklapa or 0 <= (pocetak - sada).total_seconds() <= 3600
+        if not preklapa:
+            return True
+        odgovor = QMessageBox.question(
+            self.window(),
+            "Predstojeća rezervacija",
+            f"{self.ime} ima rezervaciju u {pocetak:%H:%M} za "
+            f"{rezervacija['ime_gosta']}.\n\nIpak pokrenuti sesiju?",
+        )
+        return odgovor == QMessageBox.StandardButton.Yes
+
     # ── Actions ────────────────────────────────────────────────
 
     def start_sesiju(self):
@@ -255,6 +303,8 @@ class UredjajKartica(QWidget):
             return
 
         rezultat = dlg.rezultat
+        if not self._potvrdi_start_uz_rezervaciju(rezultat):
+            return
         tip = rezultat["tip"]
         nova_sesija = SessionState(
             vreme_starta=datetime.now(),

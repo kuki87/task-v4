@@ -474,7 +474,11 @@ class AdminPanel(QDialog):
     def _brisi_uredjaj(self, uid: int):
         if QMessageBox.question(self, "Potvrda", "Obrisati uređaj?") != QMessageBox.StandardButton.Yes:
             return
-        brisi_uredjaj(uid)
+        try:
+            brisi_uredjaj(uid)
+        except ValueError as e:
+            QMessageBox.warning(self, "Brisanje uređaja", str(e))
+            return
         self._ucitaj_uredjaje()
         if self.reload_callback:
             self.reload_callback()

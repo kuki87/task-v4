@@ -67,6 +67,7 @@ class _MainWindow(QMainWindow):
         self._pazar_dlg: Optional[QDialog] = None
         self._historija_dlg: Optional[QDialog] = None
         self._izvjestaji_dlg: Optional[QDialog] = None
+        self._rezervacije_dlg: Optional[QDialog] = None
 
         inicijalizuj_bazu()
         self._seed_uredjaje()
@@ -79,6 +80,12 @@ class _MainWindow(QMainWindow):
         self._timer.setInterval(1000)
         self._timer.timeout.connect(self._tick)
         self._timer.start()
+
+        # Rezervacije se osvježavaju po događaju i laganim minutnim timerom.
+        self._rezervacije_timer = QTimer(self)
+        self._rezervacije_timer.setInterval(60_000)
+        self._rezervacije_timer.timeout.connect(self._osvjezi_rezervacije_kartica)
+        self._rezervacije_timer.start()
 
     # ── Seed ──────────────────────────────────────────────────
 
@@ -153,6 +160,7 @@ class _MainWindow(QMainWindow):
             ("Smjena",  self._meni_smjena),
             ("Pazar",   self._otvori_pazar),
             ("Sesije",  self._otvori_historiju_sesija),
+            ("Rezervacije", self._otvori_rezervacije),
             ("Izvještaji", self._otvori_izvjestaje),
             ("Admin",   self._otvori_admin),
         ]:
@@ -277,6 +285,7 @@ class _MainWindow(QMainWindow):
                     cena=u["cena"],
                     state=self.state,
                     get_sve_uredjaje=lambda: self.kartice,
+                    uredjaj_id=u["id"],
                 )
                 kartica.pazar_changed.connect(self._pazar_promijenjen)
                 if row_lay is not None:
@@ -315,6 +324,7 @@ class _MainWindow(QMainWindow):
             if k.ime in self._session_cache:
                 k.session, k.kosarica = self._session_cache[k.ime]
             k.osvjezi()
+        self._osvjezi_rezervacije_kartica()
 
     # ── Timer tick ─────────────────────────────────────────────
 
@@ -322,6 +332,16 @@ class _MainWindow(QMainWindow):
         for k in self.kartice:
             k.osvjezi()
         self._bocni.osvjezi_ako_promijenjeno(self.kartice)
+
+    def _osvjezi_rezervacije_kartica(self):
+        from services.rezervacije import dohvati_naredne_rezervacije_uredjaja
+
+        kartice_po_id = {
+            k.uredjaj_id: k for k in self.kartice if k.uredjaj_id is not None
+        }
+        rezervacije = dohvati_naredne_rezervacije_uredjaja(kartice_po_id)
+        for uredjaj_id, kartica in kartice_po_id.items():
+            kartica.postavi_narednu_rezervaciju(rezervacije.get(uredjaj_id))
 
     # ── Status bar ─────────────────────────────────────────────
 
@@ -541,6 +561,21 @@ class _MainWindow(QMainWindow):
             self._historija_dlg.raise_()
             return
         self._historija_dlg = HistorijaSesijaDijalog(self)
+
+    def _otvori_rezervacije(self):
+        from ui.rezervacije import RezervacijeDijalog
+        if self._rezervacije_dlg and not self._rezervacije_dlg.isHidden():
+            self._rezervacije_dlg.raise_()
+            return
+        self._rezervacije_dlg = RezervacijeDijalog(
+            self,
+            radnik_getter=lambda: self.state.ime_radnika,
+            smjena_id_getter=lambda: self.state.trenutna_smjena_id,
+        )
+        self._rezervacije_dlg.rezervacije_changed.connect(
+            self._osvjezi_rezervacije_kartica
+        )
+        self._rezervacije_dlg.show()
 
     def _otvori_izvjestaje(self):
         from ui.izvjestaji import IzvjestajiDijalog
