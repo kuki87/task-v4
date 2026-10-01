@@ -308,8 +308,19 @@ class UredjajKartica(QWidget):
             self._lbl_rezervacija.hide()
             return
         pocetak = datetime.fromisoformat(rezervacija["pocetak"])
+        try:
+            grupa_id = rezervacija["grupa_id"]
+            grupa_velicina = rezervacija["grupa_velicina"]
+            tip_uredjaja = rezervacija["tip_uredjaja"]
+        except (KeyError, IndexError, TypeError):
+            grupa_id = None
+            grupa_velicina = None
+            tip_uredjaja = None
+        gost = rezervacija["ime_gosta"]
+        if grupa_id is not None:
+            gost = f"Grupa {gost} ({grupa_velicina} {tip_uredjaja or self.tip})"
         self._lbl_rezervacija.setText(
-            f"REZ {pocetak:%H:%M} • {rezervacija['ime_gosta']}"
+            f"REZ {pocetak:%H:%M} • {gost}"
         )
         minuta = int((pocetak - datetime.now()).total_seconds() // 60)
         boja = "#fbbf24" if minuta <= 30 else "#64748b"

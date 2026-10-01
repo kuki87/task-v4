@@ -139,7 +139,32 @@ def pokreni_migracije(conn: sqlite3.Connection):
         c.execute("ALTER TABLE sesije_log ADD COLUMN limit_sekundi INTEGER")
         conn.commit()
 
-    # Migracija: rezervacije su vezane za stabilni ID uređaja, a historija se čuva.
+    # Grupna rezervacija je stabilan parent za zajednički termin i status.
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS rezervacijske_grupe (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ime_gosta TEXT NOT NULL CHECK (TRIM(ime_gosta) <> ''),
+            telefon TEXT,
+            pocetak TEXT NOT NULL,
+            kraj TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'rezervisano'
+                CHECK (status IN ('rezervisano', 'stigao', 'zavrseno', 'otkazano', 'no_show')),
+            napomena TEXT,
+            kreirao_user_id INTEGER,
+            kreirao_radnik TEXT NOT NULL,
+            kreirano TEXT NOT NULL,
+            azurirano TEXT NOT NULL,
+            FOREIGN KEY (kreirao_user_id) REFERENCES korisnici(id) ON DELETE SET NULL,
+            CHECK (pocetak < kraj)
+        )
+    """)
+    c.execute("""
+        CREATE INDEX IF NOT EXISTS idx_rezervacijske_grupe_termin_status
+        ON rezervacijske_grupe (pocetak, kraj, status)
+    """)
+    conn.commit()
+
+    # Rezervacije su vezane za stabilni ID uređaja, a historija se čuva.
     c.execute("""
         CREATE TABLE IF NOT EXISTS rezervacije (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -175,6 +200,10 @@ def pokreni_migracije(conn: sqlite3.Connection):
         ],
         "rezervacije": [
             ("kreirao_user_id", "INTEGER REFERENCES korisnici(id) ON DELETE SET NULL"),
+            (
+                "grupa_id",
+                "INTEGER REFERENCES rezervacijske_grupe(id) ON DELETE RESTRICT",
+            ),
         ],
         "logovi": [
             ("user_id", "INTEGER REFERENCES korisnici(id) ON DELETE SET NULL"),
@@ -200,6 +229,10 @@ def pokreni_migracije(conn: sqlite3.Connection):
     c.execute(
         "CREATE INDEX IF NOT EXISTS idx_logovi_entitet_akcija "
         "ON logovi (entitet, akcija)"
+    )
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS idx_rezervacije_grupa_id "
+        "ON rezervacije (grupa_id, uredjaj_id)"
     )
     conn.commit()
 
