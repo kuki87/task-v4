@@ -303,3 +303,222 @@ def generiši_pdf(smjena_id: int, podaci: dict) -> str:
         log.error(f"PDF izvještaj smjene {smjena_id} nije generisan: {e}")
         return ""
     return filename
+
+
+def generisi_txt_perioda(datum_od: str, datum_do: str, podaci: dict = None) -> str:
+    """Snimi novi tekstualni izvještaj perioda i vrati putanju fajla."""
+    if podaci is None:
+        from services.izvjestaj_perioda import dohvati_izvjestaj_perioda
+        podaci = dohvati_izvjestaj_perioda(datum_od, datum_do)
+
+    sadrzaj = _sadrzaj_perioda(podaci)
+    _osiguraj_folder()
+    putanja = _jedinstvena_putanja(os.path.join(
+        IZVJESTAJI_DIR,
+        f"izvjestaj_{datum_od}_{datum_do}.txt",
+    ))
+    with open(putanja, "w", encoding="utf-8") as fajl:
+        fajl.write(sadrzaj)
+    return putanja
+
+
+def generisi_pdf_perioda(datum_od: str, datum_do: str, podaci: dict = None) -> str:
+    """Snimi novi PDF izvještaj perioda; stari izvještaj smjene ostaje odvojen."""
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.lib.units import cm
+        from reportlab.platypus import (
+            Paragraph,
+            SimpleDocTemplate,
+            Spacer,
+            Table,
+            TableStyle,
+        )
+    except ImportError as e:
+        log.error(f"reportlab nije dostupan, PDF izvještaj perioda preskočen: {e}")
+        return ""
+
+    if podaci is None:
+        from services.izvjestaj_perioda import dohvati_izvjestaj_perioda
+        podaci = dohvati_izvjestaj_perioda(datum_od, datum_do)
+
+    font, font_bold = _registruj_font()
+    _osiguraj_folder()
+    putanja = _jedinstvena_putanja(os.path.join(
+        IZVJESTAJI_DIR,
+        f"izvjestaj_{datum_od}_{datum_do}.pdf",
+    ))
+
+    try:
+        doc = SimpleDocTemplate(
+            putanja,
+            pagesize=A4,
+            leftMargin=1.5 * cm,
+            rightMargin=1.5 * cm,
+            topMargin=1.5 * cm,
+            bottomMargin=1.5 * cm,
+        )
+        styles = getSampleStyleSheet()
+        for ime in ("Normal", "Title", "Heading2", "Heading3"):
+            styles[ime].fontName = font_bold if ime != "Normal" else font
+
+        period = podaci["period"]
+        sazetak = podaci["sazetak"]
+        sesije = podaci["sesije"]
+        story = [
+            Paragraph("CAFFE & GAMING ZONE", styles["Title"]),
+            Paragraph("Poslovni izvještaj perioda", styles["Heading2"]),
+            Paragraph(
+                f"Period: {period['datum_od']} — {period['datum_do']}",
+                styles["Normal"],
+            ),
+            Spacer(1, 0.35 * cm),
+        ]
+
+        summary_data = [
+            ["Ukupno", "Računari", "Artikli", "Šank"],
+            [
+                f"{sazetak['ukupno']:.2f} KM",
+                f"{sazetak['racunari']:.2f} KM",
+                f"{sazetak['artikli']:.2f} KM",
+                f"{sazetak['sank']:.2f} KM",
+            ],
+            ["Završene smjene", "Sesije", "Prosjek / smjena", "Prosjek / sesija"],
+            [
+                str(sazetak["broj_zavrsenih_smjena"]),
+                str(sazetak["broj_sesija"]),
+                f"{sazetak['prosjek_po_smjeni']:.2f} KM",
+                f"{sazetak['prosjek_po_zavrsenoj_sesiji']:.2f} KM",
+            ],
+        ]
+        summary = Table(summary_data, colWidths=[4.2 * cm] * 4)
+        summary.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4f46e5")),
+            ("BACKGROUND", (0, 2), (-1, 2), colors.HexColor("#e5e7eb")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTNAME", (0, 0), (-1, -1), font),
+            ("FONTNAME", (0, 0), (-1, 0), font_bold),
+            ("FONTNAME", (0, 2), (-1, 2), font_bold),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#d1d5db")),
+            ("FONTSIZE", (0, 0), (-1, -1), 8),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ]))
+        story.extend([summary, Spacer(1, 0.35 * cm)])
+
+        tipovi = sesije["tipovi"]
+        story.append(Paragraph("Sesije", styles["Heading3"]))
+        story.append(Paragraph(
+            "Regular: {neograniceno} · Prepaid: {prepaid} · Pass1: {pass1} · "
+            "Pass2: {pass2} · Minecraft: {minecraft} · Aktivne: {aktivne}".format(
+                aktivne=sesije["aktivne"], **tipovi
+            ),
+            styles["Normal"],
+        ))
+        story.append(Spacer(1, 0.3 * cm))
+
+        if podaci["artikli"]["top_po_kolicini"]:
+            story.append(Paragraph("Top artikli po količini", styles["Heading3"]))
+            redovi = [["Artikal", "Količina", "Prihod"]] + [
+                [a["naziv"], str(a["kolicina"]), f"{a['prihod']:.2f} KM"]
+                for a in podaci["artikli"]["top_po_kolicini"][:10]
+            ]
+            story.append(_pdf_tabela(redovi, [8 * cm, 3 * cm, 4 * cm], font, font_bold))
+            story.append(Spacer(1, 0.3 * cm))
+
+        story.append(Paragraph("Smjene", styles["Heading3"]))
+        smjene = [["ID", "Radnik", "Početak", "Kraj / status", "Pazar"]]
+        for s in podaci["smjene"]:
+            smjene.append([
+                str(s["id"]),
+                s["radnik"] or "—",
+                _vrijeme(s["pocetak"], 16),
+                _vrijeme(s["kraj"], 16) if s["kraj"] else "Otvorena",
+                f"{s['pazar']:.2f} KM",
+            ])
+        story.append(_pdf_tabela(
+            smjene, [1.2 * cm, 3.5 * cm, 4.5 * cm, 4.5 * cm, 2.7 * cm], font, font_bold
+        ))
+        story.extend([
+            Spacer(1, 0.3 * cm),
+            Paragraph(
+                "Napomena: šank čuva zbirni iznos bez naziva i količine artikala.",
+                styles["Normal"],
+            ),
+        ])
+        doc.build(story)
+    except Exception as e:
+        log.error(f"PDF izvještaj perioda {datum_od}—{datum_do} nije generisan: {e}")
+        return ""
+    return putanja
+
+
+def _sadrzaj_perioda(podaci: dict) -> str:
+    period = podaci["period"]
+    sazetak = podaci["sazetak"]
+    sesije = podaci["sesije"]
+    tipovi = sesije["tipovi"]
+    linija = "=" * 64
+    tekst = [
+        linija,
+        "CAFFE & GAMING ZONE — POSLOVNI IZVJEŠTAJ",
+        f"Period: {period['datum_od']} — {period['datum_do']}",
+        linija,
+        f"Ukupno             : {sazetak['ukupno']:.2f} KM",
+        f"Računari           : {sazetak['racunari']:.2f} KM",
+        f"Artikli uz uređaje : {sazetak['artikli']:.2f} KM",
+        f"Šank               : {sazetak['sank']:.2f} KM",
+        f"Završene smjene    : {sazetak['broj_zavrsenih_smjena']}",
+        f"Broj sesija        : {sazetak['broj_sesija']}",
+        f"Prosjek / smjena   : {sazetak['prosjek_po_smjeni']:.2f} KM",
+        f"Prosjek / sesija   : {sazetak['prosjek_po_zavrsenoj_sesiji']:.2f} KM",
+        "",
+        "SESIJE",
+        f"Regular: {tipovi['neograniceno']}  Prepaid: {tipovi['prepaid']}  "
+        f"Pass1: {tipovi['pass1']}  Pass2: {tipovi['pass2']}  "
+        f"Minecraft: {tipovi['minecraft']}  Aktivne: {sesije['aktivne']}",
+        "",
+        "TOP ARTIKLI PO KOLIČINI",
+    ]
+    for artikal in podaci["artikli"]["top_po_kolicini"][:10]:
+        tekst.append(
+            f"{artikal['naziv']:<24} {artikal['kolicina']:>6}  "
+            f"{artikal['prihod']:>10.2f} KM"
+        )
+    tekst.extend(["", "SMJENE"])
+    for smjena in podaci["smjene"]:
+        kraj = _vrijeme(smjena["kraj"], 16) if smjena["kraj"] else "Otvorena"
+        tekst.append(
+            f"#{smjena['id']:<5} {(smjena['radnik'] or '—'):<18} "
+            f"{_vrijeme(smjena['pocetak'], 16):<16}  {kraj:<16}  "
+            f"{smjena['pazar']:.2f} KM"
+        )
+    tekst.extend([
+        "",
+        "Napomena: šank čuva zbirni iznos bez naziva i količine artikala.",
+        "Imenovani artikli koriste vrijeme dodavanja na uređaj, ne vrijeme naplate.",
+        f"Generisano: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}",
+    ])
+    return "\n".join(tekst)
+
+
+def _pdf_tabela(redovi, sirine, font, font_bold):
+    from reportlab.lib import colors
+    from reportlab.platypus import Table, TableStyle
+
+    tabela = Table(redovi, colWidths=sirine, repeatRows=1)
+    tabela.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4f46e5")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, -1), font),
+        ("FONTNAME", (0, 0), (-1, 0), font_bold),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#d1d5db")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f3f4f6")]),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ("TOPPADDING", (0, 0), (-1, -1), 4),
+    ]))
+    return tabela
