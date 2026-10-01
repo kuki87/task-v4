@@ -11,111 +11,30 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-from services.auth import (
-    AUTH_NEDOSTAJE, AUTH_OSTECEN, AUTH_SPREMAN,
-    stanje_admin_lozinke, provjeri_admin_lozinku, promijeni_lozinku,
-)
 from services.artikli import ucitaj_artikle, dodaj_artikal, uredi_artikal, brisi_artikal
 from services.uredjaji import (
     ucitaj_uredjaje, dodaj_uredjaj, brisi_uredjaj,
-    ucitaj_logove, postavi_cijenu_grupe,
+    postavi_cijenu_grupe,
+)
+from services.permissions import (
+    ARTICLE_MANAGE, DEVICE_MANAGE, ima_dozvolu, normalizuj_identitet,
 )
 
 
 class AdminPanel(QDialog):
-    def __init__(self, parent, reload_callback: Optional[Callable] = None):
+    def __init__(self, parent, actor, reload_callback: Optional[Callable] = None):
         super().__init__(parent)
         self.setWindowTitle("Admin Panel")
         self.resize(680, 660)
         self.reload_callback = reload_callback
-        self.auth_ok = False
-
-        try:
-            auth_stanje = stanje_admin_lozinke()
-        except Exception as e:
-            QMessageBox.critical(
-                parent, "Greška autentikacije",
-                f"Admin konfiguraciju nije moguće učitati:\n{e}"
-            )
-            return
-
-        if auth_stanje == AUTH_NEDOSTAJE:
-            if not self._postavi_prvu_admin_lozinku(parent):
-                return
-        elif auth_stanje == AUTH_OSTECEN:
-            QMessageBox.critical(
-                parent, "Oštećena admin konfiguracija",
-                "Admin podaci za prijavu su nepotpuni ili imaju neispravan format. "
-                "Pristup je blokiran; automatski reset lozinke nije izvršen."
-            )
-            return
-        elif auth_stanje == AUTH_SPREMAN:
-            lozinka, ok = QInputDialog.getText(
-                parent, "Admin", "Unesite admin lozinku:",
-                QLineEdit.EchoMode.Password
-            )
-            if not ok:
-                return
-            try:
-                ispravna = provjeri_admin_lozinku(lozinka)
-            except Exception as e:
-                QMessageBox.critical(
-                    parent, "Greška autentikacije",
-                    f"Provjera admin lozinke nije uspjela:\n{e}"
-                )
-                return
-            if not ispravna:
-                QMessageBox.critical(parent, "Greška", "Pogrešna lozinka!")
-                return
-        else:
-            QMessageBox.critical(
-                parent, "Greška autentikacije",
-                "Nepoznato stanje admin konfiguracije."
-            )
-            return
-
-        self.auth_ok = True
+        self.actor = normalizuj_identitet(actor)
+        self.auth_ok = (
+            ima_dozvolu(self.actor, ARTICLE_MANAGE)
+            or ima_dozvolu(self.actor, DEVICE_MANAGE)
+        )
+        if not self.auth_ok:
+            raise PermissionError("Nemate dozvolu za Admin panel.")
         self._build_ui()
-
-    def _postavi_prvu_admin_lozinku(self, parent) -> bool:
-        QMessageBox.information(
-            parent, "Prvo pokretanje",
-            "Admin lozinka još nije postavljena. Prije pristupa Admin panelu "
-            "morate postaviti novu lozinku."
-        )
-        nova, ok = QInputDialog.getText(
-            parent, "Nova admin lozinka", "Unesite novu admin lozinku:",
-            QLineEdit.EchoMode.Password
-        )
-        if not ok:
-            return False
-        ponovi, ok = QInputDialog.getText(
-            parent, "Potvrda admin lozinke", "Ponovite novu admin lozinku:",
-            QLineEdit.EchoMode.Password
-        )
-        if not ok:
-            return False
-        if nova != ponovi:
-            QMessageBox.warning(parent, "Greška", "Lozinke se ne podudaraju!")
-            return False
-        if len(nova) < 4:
-            QMessageBox.warning(
-                parent, "Greška", "Lozinka mora imati najmanje 4 znaka!"
-            )
-            return False
-
-        try:
-            sacuvano = promijeni_lozinku(nova)
-        except Exception as e:
-            QMessageBox.critical(
-                parent, "Greška autentikacije",
-                f"Nova admin lozinka nije sačuvana:\n{e}"
-            )
-            return False
-        if not sacuvano:
-            QMessageBox.warning(parent, "Greška", "Admin lozinka nije sačuvana.")
-            return False
-        return True
 
     def exec(self):
         if not self.auth_ok:
@@ -133,8 +52,6 @@ class AdminPanel(QDialog):
 
         self._tabs.addTab(self._tab_artikli(),   "Artikli")
         self._tabs.addTab(self._tab_uredjaji(),  "Uređaji")
-        self._tabs.addTab(self._tab_logovi(),    "Logovi")
-        self._tabs.addTab(self._tab_lozinka(),   "Lozinka")
 
     # ── TAB ARTIKLI ────────────────────────────────────────────
 
@@ -222,7 +139,7 @@ class AdminPanel(QDialog):
             QMessageBox.warning(self, "Greška", "Unesite naziv!")
             return
         try:
-            dodaj_artikal(naziv, cijena)
+            dodaj_artikal(naziv, cijena, actor=self.actor)
             self._entry_art_naziv.clear()
             self._entry_art_cijena.clear()
             self._ucitaj_artikle()
@@ -243,7 +160,7 @@ class AdminPanel(QDialog):
         except ValueError:
             QMessageBox.warning(self, "Greška", "Nevalidna cijena!")
             return
-        uredi_artikal(aid, novi_naziv, nova_c)
+        uredi_artikal(aid, novi_naziv, nova_c, actor=self.actor)
         self._ucitaj_artikle()
         if self.reload_callback:
             self.reload_callback()
@@ -251,7 +168,7 @@ class AdminPanel(QDialog):
     def _brisi_artikal(self, aid: int):
         if QMessageBox.question(self, "Potvrda", "Obrisati artikal?") != QMessageBox.StandardButton.Yes:
             return
-        brisi_artikal(aid)
+        brisi_artikal(aid, actor=self.actor)
         self._ucitaj_artikle()
         if self.reload_callback:
             self.reload_callback()
@@ -422,7 +339,7 @@ class AdminPanel(QDialog):
 
         try:
             if kolicina == 1:
-                dodaj_uredjaj(base_ime, cena, tip, grupa)
+                dodaj_uredjaj(base_ime, cena, tip, grupa, actor=self.actor)
             else:
                 svi = ucitaj_uredjaje()
                 postojeci_imena = {u["ime"] for u in svi}
@@ -436,7 +353,9 @@ class AdminPanel(QDialog):
                 while created < kolicina:
                     kandidat = f"{base_ime}{sljedeci}"
                     if kandidat not in postojeci_imena:
-                        dodaj_uredjaj(kandidat, cena, tip, grupa)
+                        dodaj_uredjaj(
+                            kandidat, cena, tip, grupa, actor=self.actor
+                        )
                         postojeci_imena.add(kandidat)
                         created += 1
                     sljedeci += 1
@@ -462,7 +381,7 @@ class AdminPanel(QDialog):
                 f"Cijena za grupu {grupa} mora biti broj veći od 0!"
             )
             return
-        azurirano = postavi_cijenu_grupe(grupa, cena)
+        azurirano = postavi_cijenu_grupe(grupa, cena, actor=self.actor)
         QMessageBox.information(
             self, "OK",
             f"Ažurirano {azurirano} uređaja u grupi '{grupa}' → {cena:.2f} KM/h"
@@ -475,7 +394,7 @@ class AdminPanel(QDialog):
         if QMessageBox.question(self, "Potvrda", "Obrisati uređaj?") != QMessageBox.StandardButton.Yes:
             return
         try:
-            brisi_uredjaj(uid)
+            brisi_uredjaj(uid, actor=self.actor)
         except ValueError as e:
             QMessageBox.warning(self, "Brisanje uređaja", str(e))
             return
@@ -485,100 +404,4 @@ class AdminPanel(QDialog):
 
     # ── TAB LOGOVI ─────────────────────────────────────────────
 
-    def _tab_logovi(self) -> QWidget:
-        from PySide6.QtWidgets import QPlainTextEdit
-        w = QWidget()
-        lay = QVBoxLayout(w)
-        lay.setSpacing(6)
-
-        # Filter row
-        f_row = QHBoxLayout()
-        f_row.addWidget(QLabel("Filter (datum):"))
-        self._entry_filter = QLineEdit()
-        self._entry_filter.setPlaceholderText("2024-01-01")
-        self._entry_filter.setFixedWidth(120)
-        f_row.addWidget(self._entry_filter)
-
-        btn_fil = QPushButton("Filtriraj")
-        btn_fil.setFixedWidth(80)
-        btn_fil.clicked.connect(self._ucitaj_logove)
-        f_row.addWidget(btn_fil)
-
-        btn_sve = QPushButton("Sve")
-        btn_sve.setFixedWidth(60)
-        btn_sve.clicked.connect(lambda: (self._entry_filter.clear(), self._ucitaj_logove()))
-        f_row.addWidget(btn_sve)
-        f_row.addStretch()
-        lay.addLayout(f_row)
-
-        self._textbox_logovi = QPlainTextEdit()
-        self._textbox_logovi.setReadOnly(True)
-        lay.addWidget(self._textbox_logovi)
-
-        self._ucitaj_logove()
-        return w
-
-    def _ucitaj_logove(self):
-        filter_dat = self._entry_filter.text().strip() or None
-        rows = ucitaj_logove(filter_dat)
-        self._textbox_logovi.clear()
-        for r in rows:
-            vreme = r["vreme"][:19].replace("T", " ") if r["vreme"] else ""
-            linija = f"{vreme}  [{r['radnik']}]  {r['uredjaj']}  →  {r['akcija']}\n"
-            self._textbox_logovi.insertPlainText(linija)
-
     # ── TAB LOZINKA ────────────────────────────────────────────
-
-    def _tab_lozinka(self) -> QWidget:
-        w = QWidget()
-        lay = QVBoxLayout(w)
-        lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lay.setSpacing(10)
-
-        hdr = QLabel("Promjena admin lozinke")
-        hdr.setStyleSheet("font-size: 14px; font-weight: 700; color: #e2e8f0;")
-        hdr.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lay.addWidget(hdr)
-
-        def row_input(label_text: str, echo=QLineEdit.EchoMode.Password) -> QLineEdit:
-            lbl = QLabel(label_text)
-            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lay.addWidget(lbl)
-            entry = QLineEdit()
-            entry.setEchoMode(echo)
-            entry.setFixedWidth(220)
-            lay.addWidget(entry, 0, Qt.AlignmentFlag.AlignCenter)
-            return entry
-
-        self._entry_nova_loz = row_input("Nova lozinka:")
-        self._entry_ponovi_loz = row_input("Ponovi lozinku:")
-
-        btn = QPushButton("Spremi lozinku")
-        btn.setObjectName("btnSuccess")
-        btn.setFixedWidth(180)
-        btn.clicked.connect(self._promijeni_lozinku)
-        lay.addWidget(btn, 0, Qt.AlignmentFlag.AlignCenter)
-        return w
-
-    def _promijeni_lozinku(self):
-        nova = self._entry_nova_loz.text()
-        ponovi = self._entry_ponovi_loz.text()
-        if nova != ponovi:
-            QMessageBox.warning(self, "Greška", "Lozinke se ne podudaraju!")
-            return
-        if len(nova) < 4:
-            QMessageBox.warning(self, "Greška", "Lozinka mora imati najmanje 4 znaka!")
-            return
-        try:
-            sacuvano = promijeni_lozinku(nova)
-        except Exception as e:
-            QMessageBox.critical(
-                self, "Greška", f"Lozinka nije promijenjena:\n{e}"
-            )
-            return
-        if not sacuvano:
-            QMessageBox.warning(self, "Greška", "Lozinka nije promijenjena!")
-            return
-        QMessageBox.information(self, "Uspjeh", "Lozinka uspješno promijenjena!")
-        self._entry_nova_loz.clear()
-        self._entry_ponovi_loz.clear()

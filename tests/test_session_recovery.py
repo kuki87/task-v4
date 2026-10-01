@@ -13,6 +13,7 @@ import ui.glavni_prozor as glavni_prozor_module
 from models.app_state import AppState
 from models.artikal import Artikal
 from models.session_state import SessionState
+from tests.helpers import napravi_test_korisnika
 from ui.glavni_prozor import _MainWindow
 
 
@@ -46,6 +47,14 @@ def _snimak_recovery_tabela(conn):
     }
 
 
+@pytest.fixture
+def actor(db):
+    korisnik = napravi_test_korisnika(db)
+    AppState().prijavi_korisnika(korisnik)
+    yield korisnik
+    AppState().odjavi_korisnika()
+
+
 def _restartuj_aplikaciju(qtbot, monkeypatch: pytest.MonkeyPatch):
     db_module.zatvori_bazu()
     AppState().zatvori_smjenu()
@@ -65,16 +74,16 @@ def _kartica(prozor, ime):
     return next(kartica for kartica in prozor.kartice if kartica.ime == ime)
 
 
-def test_isti_naziv_sa_razlicitim_cijenama_ne_pravi_prosjecnu_cijenu(db):
-    smjena_id = smjena_service.otvori_smjenu("Tester")
+def test_isti_naziv_sa_razlicitim_cijenama_ne_pravi_prosjecnu_cijenu(db, actor):
+    smjena_id = smjena_service.otvori_smjenu(actor)
     pazar_service.dodaj_artikal_na_uredjaj(
-        smjena_id, "PC1", "Kafa", 1, 1.50
+        smjena_id, "PC1", "Kafa", 1, 1.50, actor=actor
     )
     pazar_service.dodaj_artikal_na_uredjaj(
-        smjena_id, "PC1", "Kafa", 2, 1.50
+        smjena_id, "PC1", "Kafa", 2, 1.50, actor=actor
     )
     pazar_service.dodaj_artikal_na_uredjaj(
-        smjena_id, "PC1", "Kafa", 1, 2.00
+        smjena_id, "PC1", "Kafa", 1, 2.00, actor=actor
     )
 
     artikli = pazar_service.dohvati_nenaplacene_artikle(smjena_id, "PC1")
@@ -87,18 +96,21 @@ def test_isti_naziv_sa_razlicitim_cijenama_ne_pravi_prosjecnu_cijenu(db):
 
 def test_restart_obnavlja_regularnu_sesiju_i_agregiranu_kosaricu_bez_upisa(
     db,
+    actor,
     qtbot,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    uredjaji_service.dodaj_uredjaj("PC1", 2.0, "PC", "Classic")
-    smjena_id = smjena_service.otvori_smjenu("Tester")
+    uredjaji_service.dodaj_uredjaj(
+        "PC1", 2.0, "PC", "Classic", actor=actor
+    )
+    smjena_id = smjena_service.otvori_smjenu(actor)
     pocetak = datetime.now() - timedelta(minutes=30)
     sesija = SessionState(vreme_starta=pocetak, tip="neograniceno")
-    pazar_service.start_sesija("PC1", sesija, smjena_id)
+    pazar_service.start_sesija("PC1", sesija, smjena_id, actor=actor)
 
     for _ in range(3):
         pazar_service.dodaj_artikal_na_uredjaj(
-            smjena_id, "PC1", "Kafa", 1, 1.50
+            smjena_id, "PC1", "Kafa", 1, 1.50, actor=actor
         )
     db.execute(
         """INSERT INTO prodaja_artikala
@@ -162,6 +174,7 @@ def test_restart_obnavlja_regularnu_sesiju_i_agregiranu_kosaricu_bez_upisa(
 )
 def test_restart_cuva_tip_i_limit_prepaid_i_pass_sesije(
     db,
+    actor,
     qtbot,
     monkeypatch: pytest.MonkeyPatch,
     tip,
@@ -170,8 +183,10 @@ def test_restart_cuva_tip_i_limit_prepaid_i_pass_sesije(
     is_prepaid,
     is_pass2,
 ):
-    uredjaji_service.dodaj_uredjaj("PC1", 2.0, "PC", "Classic")
-    smjena_id = smjena_service.otvori_smjenu("Tester")
+    uredjaji_service.dodaj_uredjaj(
+        "PC1", 2.0, "PC", "Classic", actor=actor
+    )
+    smjena_id = smjena_service.otvori_smjenu(actor)
     sesija = SessionState(
         vreme_starta=datetime.now() - timedelta(minutes=5),
         limit_sekundi=limit_sekundi,
@@ -179,7 +194,9 @@ def test_restart_cuva_tip_i_limit_prepaid_i_pass_sesije(
         is_pass2=is_pass2,
         tip=tip,
     )
-    pazar_service.start_sesija("PC1", sesija, smjena_id, iznos)
+    pazar_service.start_sesija(
+        "PC1", sesija, smjena_id, iznos, actor=actor
+    )
     prije_recoveryja = _snimak_recovery_tabela(db)
 
     prozor, conn = _restartuj_aplikaciju(qtbot, monkeypatch)
@@ -195,17 +212,22 @@ def test_restart_cuva_tip_i_limit_prepaid_i_pass_sesije(
 
 def test_orphan_aktivna_sesija_se_loguje_i_prijavljuje_bez_promjene_baze(
     db,
+    actor,
     qtbot,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    uredjaji_service.dodaj_uredjaj("OBRISANI-PC", 2.0, "PC", "Classic")
+    uredjaji_service.dodaj_uredjaj(
+        "OBRISANI-PC", 2.0, "PC", "Classic", actor=actor
+    )
     uredjaj_id = db.execute(
         "SELECT id FROM uredjaji WHERE ime = ?", ("OBRISANI-PC",)
     ).fetchone()["id"]
-    smjena_id = smjena_service.otvori_smjenu("Tester")
+    smjena_id = smjena_service.otvori_smjenu(actor)
     sesija = SessionState(vreme_starta=datetime.now(), tip="neograniceno")
-    pazar_service.start_sesija("OBRISANI-PC", sesija, smjena_id)
-    uredjaji_service.brisi_uredjaj(uredjaj_id)
+    pazar_service.start_sesija(
+        "OBRISANI-PC", sesija, smjena_id, actor=actor
+    )
+    uredjaji_service.brisi_uredjaj(uredjaj_id, actor=actor)
     prije_recoveryja = _snimak_recovery_tabela(db)
 
     upozorenja = []

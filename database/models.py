@@ -99,6 +99,26 @@ def kreiraj_tabele(conn: sqlite3.Connection):
 def pokreni_migracije(conn: sqlite3.Connection):
     c = conn.cursor()
 
+    # Korisnički nalozi su odvojeni od legacy admin zapisa u config tabeli.
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS korisnici (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            korisnicko_ime TEXT NOT NULL UNIQUE COLLATE NOCASE,
+            ime TEXT NOT NULL CHECK (TRIM(ime) <> ''),
+            password_hash TEXT NOT NULL,
+            rola TEXT NOT NULL CHECK (rola IN ('admin', 'manager', 'radnik')),
+            aktivan INTEGER NOT NULL DEFAULT 1 CHECK (aktivan IN (0, 1)),
+            kreiran TEXT NOT NULL,
+            azuriran TEXT NOT NULL,
+            zadnja_prijava TEXT
+        )
+    """)
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS idx_korisnici_rola_aktivan "
+        "ON korisnici (rola, aktivan)"
+    )
+    conn.commit()
+
     # Migracija: dodaj kolone koje fale na tabeli uredjaji
     ocekivane_kolone = [
         ("is_minecraft", "INTEGER DEFAULT 0"),
@@ -146,6 +166,41 @@ def pokreni_migracije(conn: sqlite3.Connection):
         CREATE INDEX IF NOT EXISTS idx_rezervacije_pocetak_status
         ON rezervacije (pocetak, status)
     """)
+    conn.commit()
+
+    # Nullable FK kolone čuvaju stare zapise bez nepouzdanog povezivanja po imenu.
+    migracijske_kolone = {
+        "smjene": [
+            ("user_id", "INTEGER REFERENCES korisnici(id) ON DELETE SET NULL"),
+        ],
+        "rezervacije": [
+            ("kreirao_user_id", "INTEGER REFERENCES korisnici(id) ON DELETE SET NULL"),
+        ],
+        "logovi": [
+            ("user_id", "INTEGER REFERENCES korisnici(id) ON DELETE SET NULL"),
+            ("username", "TEXT"),
+            ("entitet", "TEXT"),
+            ("entitet_id", "TEXT"),
+            ("detalj", "TEXT"),
+        ],
+    }
+    for tabela, kolone in migracijske_kolone.items():
+        c.execute(f"PRAGMA table_info({tabela})")
+        postojece = {red["name"] for red in c.fetchall()}
+        for naziv, definicija in kolone:
+            if naziv not in postojece:
+                c.execute(f"ALTER TABLE {tabela} ADD COLUMN {naziv} {definicija}")
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS idx_smjene_user_id ON smjene (user_id)"
+    )
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS idx_logovi_user_vreme "
+        "ON logovi (user_id, vreme DESC)"
+    )
+    c.execute(
+        "CREATE INDEX IF NOT EXISTS idx_logovi_entitet_akcija "
+        "ON logovi (entitet, akcija)"
+    )
     conn.commit()
 
     # Migracija: ispravi PS5 uređaje koji su dobili grupu 'Classic' po defaultu

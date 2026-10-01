@@ -4,6 +4,8 @@ from database.db import get_db
 from models.session_state import SessionState
 from models.artikal import Artikal
 from constants import CIJENA_MINECRAFT
+from services.audit import upisi_audit_u_transakciji
+from services.permissions import POS_USE, zahtijevaj_dozvolu
 
 
 def izracunaj_iznos_sesije(session: SessionState, cena_po_satu: float) -> float:
@@ -25,81 +27,102 @@ def naplati_uredjaj(
     cena_po_satu: float,
     smjena_id: int,
     *,
+    actor,
     commit: bool = True
 ) -> float:
+    actor = zahtijevaj_dozvolu(actor, POS_USE)
     conn = get_db()
     now = datetime.now().isoformat()
+    try:
+        iznos_sesije = izracunaj_iznos_sesije(session, cena_po_satu)
 
-    iznos_sesije = izracunaj_iznos_sesije(session, cena_po_satu)
+        tip_mapa = {
+            "neograniceno": "racunar",
+            "prepaid": "prepaid",
+            "pass1": "pass1",
+            "pass2": "pass2",
+            "minecraft": "minecraft",
+        }
+        tip_prodaje = tip_mapa.get(session.tip, "racunar")
 
-    # tip_prodaje
-    tip_mapa = {
-        "neograniceno": "racunar",
-        "prepaid": "prepaid",
-        "pass1": "pass1",
-        "pass2": "pass2",
-        "minecraft": "minecraft",
-    }
-    tip_prodaje = tip_mapa.get(session.tip, "racunar")
+        cursor = conn.execute(
+            """UPDATE sesije_log
+               SET vreme_kraja = ?, iznos = ?
+               WHERE smjena_id = ? AND uredjaj = ? AND vreme_kraja IS NULL""",
+            (now, iznos_sesije, smjena_id, uredjaj_ime)
+        )
+        if cursor.rowcount == 0:
+            raise RuntimeError(
+                f"Nije pronađena aktivna sesija za uređaj "
+                f"'{uredjaj_ime}' u smjeni {smjena_id}."
+            )
 
-    # Zatvori aktivni zapis kreiran pri START-u.
-    cursor = conn.execute(
-        """UPDATE sesije_log
-           SET vreme_kraja = ?, iznos = ?
-           WHERE smjena_id = ? AND uredjaj = ? AND vreme_kraja IS NULL""",
-        (now, iznos_sesije, smjena_id, uredjaj_ime)
-    )
-    if cursor.rowcount == 0:
+        conn.execute(
+            """INSERT INTO pazar_arhiva
+               (vreme, uredjaj, iznos, smjena_id, vreme_starta, tip_prodaje)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (now, uredjaj_ime, iznos_sesije, smjena_id,
+             session.vreme_starta.isoformat(), tip_prodaje)
+        )
+
+        ukupno_artikli = 0.0
+        for artikal in kosarica:
+            ukupno_artikli += artikal.ukupno()
+            conn.execute(
+                """INSERT INTO pazar_arhiva
+                   (vreme, uredjaj, iznos, smjena_id, vreme_starta,
+                    tip_prodaje)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (now, uredjaj_ime, artikal.ukupno(), smjena_id,
+                 session.vreme_starta.isoformat(), "artikal")
+            )
+            conn.execute(
+                """UPDATE prodaja_artikala SET naplaceno = 1
+                   WHERE uredjaj = ? AND naziv_artikla = ?
+                     AND naplaceno = 0 AND smjena_id = ?""",
+                (uredjaj_ime, artikal.naziv, smjena_id)
+            )
+
+        ukupno = round(iznos_sesije + ukupno_artikli, 2)
+        upisi_audit_u_transakciji(
+            conn, actor, "SESSION_CHARGED", "sesija",
+            smjena_id=smjena_id, uredjaj=uredjaj_ime,
+            detalj=f"Tip {session.tip}; naplaćeno {ukupno:.2f} KM."
+        )
+        if commit:
+            conn.commit()
+        return ukupno
+    except Exception:
         if commit:
             conn.rollback()
-        raise RuntimeError(
-            f"Nije pronađena aktivna sesija za uređaj '{uredjaj_ime}' u smjeni {smjena_id}."
-        )
-
-    # Upis sesije u pazar_arhiva
-    conn.execute(
-        """INSERT INTO pazar_arhiva (vreme, uredjaj, iznos, smjena_id, vreme_starta, tip_prodaje)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (now, uredjaj_ime, iznos_sesije, smjena_id,
-         session.vreme_starta.isoformat(), tip_prodaje)
-    )
-
-    # Naplata artikala iz košarice
-    ukupno_artikli = 0.0
-    for artikal in kosarica:
-        ukupno_artikli += artikal.ukupno()
-        conn.execute(
-            """INSERT INTO pazar_arhiva (vreme, uredjaj, iznos, smjena_id, vreme_starta, tip_prodaje)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (now, uredjaj_ime, artikal.ukupno(), smjena_id,
-             session.vreme_starta.isoformat(), "artikal")
-        )
-        conn.execute(
-            """UPDATE prodaja_artikala SET naplaceno = 1
-               WHERE uredjaj = ? AND naziv_artikla = ? AND naplaceno = 0 AND smjena_id = ?""",
-            (uredjaj_ime, artikal.naziv, smjena_id)
-        )
-
-    if commit:
-        conn.commit()
-    return round(iznos_sesije + ukupno_artikli, 2)
+        raise
 
 
-def naplati_sank_kosaricu(stavke: List[Artikal], smjena_id: int) -> float:
+def naplati_sank_kosaricu(stavke: List[Artikal], smjena_id: int, *, actor) -> float:
+    actor = zahtijevaj_dozvolu(actor, POS_USE)
     if not stavke:
         return 0.0
     conn = get_db()
     now = datetime.now().isoformat()
     ukupno = 0.0
-    for artikal in stavke:
-        ukupno += artikal.ukupno()
-        conn.execute(
-            """INSERT INTO pazar_arhiva (vreme, uredjaj, iznos, smjena_id, vreme_starta, tip_prodaje)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (now, "Šank", artikal.ukupno(), smjena_id, now, "sank")
+    try:
+        for artikal in stavke:
+            ukupno += artikal.ukupno()
+            conn.execute(
+                """INSERT INTO pazar_arhiva (vreme, uredjaj, iznos, smjena_id, vreme_starta, tip_prodaje)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (now, "Šank", artikal.ukupno(), smjena_id, now, "sank")
+            )
+        ukupno = round(ukupno, 2)
+        upisi_audit_u_transakciji(
+            conn, actor, "BAR_CHARGED", "sank", smjena_id=smjena_id,
+            uredjaj="Šank", detalj=f"Naplaćeno {ukupno:.2f} KM."
         )
-    conn.commit()
-    return round(ukupno, 2)
+        conn.commit()
+        return ukupno
+    except Exception:
+        conn.rollback()
+        raise
 
 
 def dohvati_pazar_smjene(smjena_id: int) -> dict:
@@ -392,8 +415,11 @@ def dodaj_artikal_na_uredjaj(
     uredjaj: str,
     naziv: str,
     kolicina: int,
-    cijena: float
+    cijena: float,
+    *,
+    actor,
 ):
+    zahtijevaj_dozvolu(actor, POS_USE)
     conn = get_db()
     now = datetime.now().isoformat()
     ukupna = round(cijena * kolicina, 2)
@@ -407,10 +433,12 @@ def dodaj_artikal_na_uredjaj(
 
 def prebaci_sesiju_na_uredjaj(
     smjena_id: int,
-    radnik: str,
     izvor_uredjaj: str,
-    cilj_uredjaj: str
+    cilj_uredjaj: str,
+    *,
+    actor,
 ) -> None:
+    actor = zahtijevaj_dozvolu(actor, POS_USE)
     conn = get_db()
     now = datetime.now().isoformat()
     try:
@@ -438,11 +466,10 @@ def prebaci_sesiju_na_uredjaj(
                WHERE smjena_id = ? AND uredjaj = ? AND naplaceno = 0""",
             (cilj_uredjaj, smjena_id, izvor_uredjaj)
         )
-        conn.execute(
-            """INSERT INTO logovi (vreme, smjena_id, radnik, uredjaj, akcija)
-               VALUES (?, ?, ?, ?, ?)""",
-            (now, smjena_id, radnik, izvor_uredjaj,
-             f"PRIJENOS → {cilj_uredjaj}")
+        upisi_audit_u_transakciji(
+            conn, actor, "SESSION_TRANSFERRED", "sesija",
+            smjena_id=smjena_id, uredjaj=izvor_uredjaj,
+            detalj=f"Transfer {izvor_uredjaj} → {cilj_uredjaj}."
         )
         conn.commit()
     except Exception:
@@ -454,8 +481,11 @@ def start_sesija(
     uredjaj: str,
     session: SessionState,
     smjena_id: int,
-    iznos: float = 0.0
+    iznos: float = 0.0,
+    *,
+    actor,
 ) -> None:
+    actor = zahtijevaj_dozvolu(actor, POS_USE)
     conn = get_db()
     vreme_starta = session.vreme_starta.isoformat()
     try:
@@ -481,6 +511,17 @@ def start_sesija(
                 (vreme_starta, uredjaj, iznos, smjena_id,
                  vreme_starta, session.tip)
             )
+        sesija_id = conn.execute(
+            """SELECT id FROM sesije_log
+               WHERE smjena_id = ? AND uredjaj = ? AND vreme_kraja IS NULL
+               ORDER BY id DESC LIMIT 1""",
+            (smjena_id, uredjaj),
+        ).fetchone()[0]
+        upisi_audit_u_transakciji(
+            conn, actor, "SESSION_STARTED", "sesija", entitet_id=sesija_id,
+            smjena_id=smjena_id, uredjaj=uredjaj,
+            detalj=f"Tip {session.tip}."
+        )
         conn.commit()
     except Exception:
         conn.rollback()

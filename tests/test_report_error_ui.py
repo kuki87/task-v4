@@ -9,6 +9,7 @@ import services.izvjestaj as izvjestaj_module
 import services.smjena as smjena_service
 import ui.glavni_prozor as glavni_prozor_module
 from models.app_state import AppState
+from tests.helpers import napravi_test_korisnika
 from ui.glavni_prozor import _MainWindow
 
 
@@ -34,11 +35,15 @@ def db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 @pytest.fixture
 def prozor(qtbot, db):
     AppState().zatvori_smjenu()
+    actor = napravi_test_korisnika(
+        db, username="test-radnik", ime="Test radnik"
+    )
+    AppState().prijavi_korisnika(actor)
     widget = _MainWindow()
     qtbot.addWidget(widget)
     widget._timer.stop()
 
-    smjena_id = smjena_service.otvori_smjenu("Test radnik")
+    smjena_id = smjena_service.otvori_smjenu(actor)
     widget.state.postavi_smjenu(smjena_id, "Test radnik")
     widget._session_cache["privremeno"] = (object(), [])
     widget._osvjezi_status_bar()
@@ -47,6 +52,7 @@ def prozor(qtbot, db):
 
     widget._timer.stop()
     AppState().zatvori_smjenu()
+    AppState().odjavi_korisnika()
 
 
 @pytest.fixture
@@ -79,9 +85,10 @@ def _provjeri_zatvorenu_smjenu(db, prozor, smjena_id, sql_naredbe):
     assert prozor._session_cache == {}
     assert prozor._bocni.sank_kosarica == []
     assert all(k.session is None and k.kosarica == [] for k in prozor.kartice)
-    assert prozor._lbl_radnik.text() == "Nema smjene"
-    assert prozor._lbl_aktivno.text() == ""
-    assert prozor._lbl_pazar.text() == ""
+    assert prozor._lbl_radnik.text() == "Korisnik: Test radnik (admin)"
+    assert prozor._lbl_smjena.text() == "NEMA OTVORENE SMJENE"
+    assert prozor._lbl_aktivno.text() == f"0/{len(prozor.kartice)} aktivno"
+    assert prozor._lbl_pazar.text() == "Pazar: 0.00 KM"
 
 
 def _provjeri_upozorenje_i_log(snimljene_poruke, log_error, greska):

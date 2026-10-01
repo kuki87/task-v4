@@ -16,15 +16,22 @@ from PySide6.QtWidgets import (
     QDialogButtonBox, QPlainTextEdit,
 )
 from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtGui import QFont, QColor
+from PySide6.QtGui import QFont, QColor, QKeySequence, QShortcut
 
 from database.db import inicijalizuj_bazu
 from services.uredjaji import seed_uredjaje_ako_prazno, ucitaj_uredjaje, dohvati_aktivne_sesije
-from services.smjena import otvori_smjenu, zatvori_smjenu, dohvati_aktivnu_smjenu
+from services.smjena import (
+    otvori_smjenu, zatvori_smjenu, dohvati_aktivnu_smjenu, preuzmi_smjenu,
+)
 from services.pazar import dohvati_nenaplacene_artikle, dohvati_pazar_smjene
-from services.logger import upisi_log, log
+from services.logger import log
 from models.app_state import AppState
 from models.session_state import SessionState
+from services.permissions import (
+    ARTICLE_MANAGE, AUDIT_VIEW, DASHBOARD_VIEW, DEVICE_MANAGE, REPORT_VIEW,
+    POS_USE, RESERVATION_MANAGE, SESSION_HISTORY_VIEW, SHIFT_CLOSE, SHIFT_OPEN,
+    USER_MANAGE,
+)
 import services.logger  # aktivira global exception handler
 
 
@@ -41,9 +48,64 @@ class GlavniProzor:
             self._qapp.setStyleSheet(open(qss_path, encoding="utf-8").read())
         except FileNotFoundError:
             pass
+        inicijalizuj_bazu()
+        self.state = AppState()
+        self._window = None
+        if self._prijavi_korisnika():
+            self._otvori_glavni_prozor()
+        else:
+            QTimer.singleShot(0, self._qapp.quit)
 
+    def _prijavi_korisnika(self) -> bool:
+        from services.users import stanje_prvog_pokretanja
+        from ui.login import FirstRunDijalog, LoginDijalog
+
+        stanje = stanje_prvog_pokretanja()
+        if stanje == "legacy_ostecen":
+            QMessageBox.critical(
+                None,
+                "Oštećena autentikacija",
+                "Legacy admin podaci su oštećeni. Automatski reset nije izvršen.",
+            )
+            return False
+        if stanje in ("novi_admin", "migracija_legacy"):
+            dlg = FirstRunDijalog(stanje)
+        else:
+            dlg = LoginDijalog()
+        if dlg.exec() != QDialog.DialogCode.Accepted or dlg.korisnik is None:
+            return False
+        self.state.prijavi_korisnika(dlg.korisnik)
+        return True
+
+    def _otvori_glavni_prozor(self):
         self._window = _MainWindow()
+        self._window.logout_requested.connect(self._odjava)
         self._window.showMaximized()
+
+    def _odjava(self):
+        from services.users import odjavi_korisnika
+
+        stari = self._window
+        if stari is not None:
+            for naziv in ("_korisnici_dlg", "_audit_dlg"):
+                dijalog = getattr(stari, naziv, None)
+                if dijalog is not None:
+                    dijalog.actor = None
+                    dijalog.close()
+            stari.hide()
+        actor = self.state.trenutni_korisnik()
+        if actor is not None:
+            try:
+                odjavi_korisnika(actor)
+            except Exception as e:
+                log.error(f"Audit odjave nije uspio: {e}")
+        self.state.odjavi_korisnika()
+        if stari is not None:
+            stari.deleteLater()
+        if self._prijavi_korisnika():
+            self._otvori_glavni_prozor()
+        else:
+            self._qapp.quit()
 
     def run(self):
         from database.db import zatvori_bazu
@@ -54,6 +116,7 @@ class GlavniProzor:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class _MainWindow(QMainWindow):
+    logout_requested = Signal()
 
     def __init__(self):
         super().__init__()
@@ -68,12 +131,18 @@ class _MainWindow(QMainWindow):
         self._historija_dlg: Optional[QDialog] = None
         self._izvjestaji_dlg: Optional[QDialog] = None
         self._rezervacije_dlg: Optional[QDialog] = None
+        self._korisnici_dlg: Optional[QDialog] = None
+        self._audit_dlg: Optional[QDialog] = None
+        self._smjena_pocetak: Optional[datetime] = None
+        self._operativna_upozorenja: list[tuple[str, Optional[str]]] = []
+        self._aktivni_alert_uredjaj: Optional[str] = None
 
         inicijalizuj_bazu()
         self._seed_uredjaje()
         self._build_ui()
         self._ucitaj_uredjaje()
         self._provjeri_smjenu()
+        self._osvjezi_status_bar()
 
         # 1-second refresh timer
         self._timer = QTimer(self)
@@ -90,12 +159,14 @@ class _MainWindow(QMainWindow):
     # ── Seed ──────────────────────────────────────────────────
 
     def _seed_uredjaje(self):
+        if not self.state.ima_dozvolu(DEVICE_MANAGE):
+            return
         seed_uredjaje_ako_prazno([
             ("PC1", 2.0, "PC", "Classic"), ("PC2", 2.0, "PC", "Classic"),
             ("PC3", 2.0, "PC", "Classic"), ("PC4", 2.0, "PC", "Classic"),
             ("PC5", 2.0, "PC", "Classic"), ("PC6", 2.0, "PC", "Classic"),
             ("PS5-1", 3.0, "PS5", "PS5"), ("PS5-2", 3.0, "PS5", "PS5"),
-        ])
+        ], actor=self.state.trenutni_korisnik())
 
     # ── Build UI ──────────────────────────────────────────────
 
@@ -108,11 +179,13 @@ class _MainWindow(QMainWindow):
 
         root_lay.addWidget(self._build_topbar())
 
-        # Content row
+        # Role-aware navigacija, operativne kartice i postojeći quick POS.
         content = QWidget()
         content_lay = QHBoxLayout(content)
         content_lay.setContentsMargins(0, 0, 0, 0)
         content_lay.setSpacing(0)
+
+        content_lay.addWidget(self._build_navigation())
 
         # Scroll area for cards
         self._scroll = QScrollArea()
@@ -133,64 +206,120 @@ class _MainWindow(QMainWindow):
         self._bocni = BocniPanel(
             smjena_id_getter=lambda: self.state.trenutna_smjena_id,
             radnik_getter=lambda: self.state.ime_radnika,
+            actor_getter=self.state.trenutni_korisnik,
             parent=self,
         )
         self._bocni.pazar_changed.connect(self._pazar_promijenjen)
         content_lay.addWidget(self._bocni)
 
         root_lay.addWidget(content, 1)
+        root_lay.addWidget(self._build_alert_bar())
+
+        self._shortcut_refresh = QShortcut(QKeySequence("F5"), self)
+        self._shortcut_refresh.activated.connect(self._refresh_trenutnog_prikaza)
+        if self.state.ima_dozvolu(RESERVATION_MANAGE):
+            self._shortcut_rezervacije = QShortcut(QKeySequence("Ctrl+R"), self)
+            self._shortcut_rezervacije.activated.connect(self._otvori_rezervacije)
 
     def _build_topbar(self) -> QFrame:
         bar = QFrame()
         bar.setObjectName("topbar")
-        bar.setFixedHeight(42)
+        bar.setFixedHeight(56)
 
         lay = QHBoxLayout(bar)
-        lay.setContentsMargins(12, 0, 16, 0)
-        lay.setSpacing(4)
+        lay.setContentsMargins(16, 0, 12, 0)
+        lay.setSpacing(10)
 
-        # Logo
-        logo = QLabel("⚡  Caffe & Gaming")
-        logo.setStyleSheet("font-size: 13px; font-weight: 700; color: #e2e8f0;")
+        logo = QLabel("Caffe & Gaming Zone")
+        logo.setObjectName("appTitle")
         lay.addWidget(logo)
-        lay.addSpacing(16)
-
-        # Nav buttons
-        for txt, slot in [
-            ("Smjena",  self._meni_smjena),
-            ("Pazar",   self._otvori_pazar),
-            ("Sesije",  self._otvori_historiju_sesija),
-            ("Rezervacije", self._otvori_rezervacije),
-            ("Izvještaji", self._otvori_izvjestaje),
-            ("Admin",   self._otvori_admin),
-        ]:
-            btn = QPushButton(txt)
-            btn.clicked.connect(slot)
-            lay.addWidget(btn)
 
         lay.addStretch()
 
-        # Right-side status labels
-        self._lbl_pazar = QLabel("")
-        self._lbl_pazar.setStyleSheet("color: #f59e0b; font-size: 11px; font-weight: 600;")
-        lay.addWidget(self._lbl_pazar)
-
-        sep1 = QLabel("│")
-        sep1.setStyleSheet("color: #1e2433; font-size: 11px;")
-        lay.addWidget(sep1)
-
-        self._lbl_aktivno = QLabel("")
-        self._lbl_aktivno.setStyleSheet("color: #94a3b8; font-size: 11px;")
-        lay.addWidget(self._lbl_aktivno)
-
-        sep2 = QLabel("│")
-        sep2.setStyleSheet("color: #1e2433; font-size: 11px;")
-        lay.addWidget(sep2)
-
-        self._lbl_radnik = QLabel("Nema smjene")
-        self._lbl_radnik.setStyleSheet("color: #ef4444; font-size: 11px;")
+        self._lbl_radnik = QLabel("")
+        self._lbl_radnik.setObjectName("topStatus")
         lay.addWidget(self._lbl_radnik)
 
+        self._lbl_smjena = QLabel("NEMA OTVORENE SMJENE")
+        self._lbl_smjena.setObjectName("topShift")
+        lay.addWidget(self._lbl_smjena)
+
+        self._lbl_aktivno = QLabel("")
+        self._lbl_aktivno.setObjectName("topStatus")
+        lay.addWidget(self._lbl_aktivno)
+
+        self._lbl_pazar = QLabel("Pazar: 0.00 KM")
+        self._lbl_pazar.setObjectName("topRevenue")
+        lay.addWidget(self._lbl_pazar)
+
+        btn_odjava = QPushButton("Odjava")
+        btn_odjava.setObjectName("btnLogout")
+        btn_odjava.clicked.connect(self._potvrdi_odjavu)
+        lay.addWidget(btn_odjava)
+        self._nav_buttons = {"Odjava": btn_odjava}
+
+        return bar
+
+    def _build_navigation(self) -> QFrame:
+        panel = QFrame()
+        panel.setObjectName("navigationSidebar")
+        panel.setFixedWidth(154)
+        lay = QVBoxLayout(panel)
+        lay.setContentsMargins(10, 14, 10, 12)
+        lay.setSpacing(4)
+
+        def sekcija(naziv: str):
+            lbl = QLabel(naziv)
+            lbl.setObjectName("navSection")
+            lay.addWidget(lbl)
+
+        def stavka(naziv: str, slot, dozvola: Optional[str] = None):
+            if dozvola is not None and not self.state.ima_dozvolu(dozvola):
+                return
+            btn = QPushButton(naziv)
+            btn.setObjectName("navButton")
+            btn.clicked.connect(slot)
+            lay.addWidget(btn)
+            self._nav_buttons[naziv] = btn
+
+        sekcija("OPERATIVNO")
+        stavka("Gaming", self._prikazi_gaming, POS_USE)
+        if self.state.ima_dozvolu(SHIFT_OPEN) or self.state.ima_dozvolu(SHIFT_CLOSE):
+            stavka("Smjena", self._meni_smjena)
+        stavka("Rezervacije", self._otvori_rezervacije, RESERVATION_MANAGE)
+        stavka("Dashboard", self._otvori_pazar, DASHBOARD_VIEW)
+
+        if self.state.ima_dozvolu(SESSION_HISTORY_VIEW) or self.state.ima_dozvolu(REPORT_VIEW):
+            lay.addSpacing(10)
+            sekcija("ANALITIKA")
+            stavka("Historija", self._otvori_historiju_sesija, SESSION_HISTORY_VIEW)
+            stavka("Izvještaji", self._otvori_izvjestaje, REPORT_VIEW)
+
+        if any(self.state.ima_dozvolu(p) for p in (
+            DEVICE_MANAGE, ARTICLE_MANAGE, USER_MANAGE, AUDIT_VIEW
+        )):
+            lay.addSpacing(10)
+            sekcija("ADMINISTRACIJA")
+            if self.state.ima_dozvolu(DEVICE_MANAGE) or self.state.ima_dozvolu(ARTICLE_MANAGE):
+                stavka("Admin", self._otvori_admin)
+            stavka("Korisnici", self._otvori_korisnike, USER_MANAGE)
+            stavka("Audit", self._otvori_audit, AUDIT_VIEW)
+
+        lay.addStretch()
+        return panel
+
+    def _build_alert_bar(self) -> QFrame:
+        bar = QFrame()
+        bar.setObjectName("alertBar")
+        bar.setFixedHeight(34)
+        lay = QHBoxLayout(bar)
+        lay.setContentsMargins(12, 3, 12, 3)
+        self._btn_alert = QPushButton("")
+        self._btn_alert.setObjectName("alertButton")
+        self._btn_alert.clicked.connect(self._fokusiraj_alert)
+        lay.addWidget(self._btn_alert)
+        bar.hide()
+        self._alert_bar = bar
         return bar
 
     # ── Load / Render ──────────────────────────────────────────
@@ -213,6 +342,9 @@ class _MainWindow(QMainWindow):
                     f"Uređaj '{ime}' uklonjen dok je imao aktivnu sesiju ili "
                     "nenaplaćenu košaricu, stanje je odbačeno."
                 )
+                upozorenje = (f"⚠ {ime}: izgubljeno aktivno stanje uređaja", ime)
+                if upozorenje not in self._operativna_upozorenja:
+                    self._operativna_upozorenja.append(upozorenje)
             QMessageBox.warning(
                 self, "Izgubljene sesije",
                 "Sljedeći uređaji su uklonjeni dok su imali aktivnu sesiju "
@@ -247,9 +379,7 @@ class _MainWindow(QMainWindow):
 
         filtrirani = list(self._svi_uredjaji)
 
-        # Calculate cards per row (window width minus bocni panel and padding)
-        avail_w = max(200, self.width() - 210 - 32)
-        max_per_row = max(1, avail_w // (160 + 14))
+        max_per_row = self._izracunaj_broj_kolona()
         self._max_per_row = max_per_row
 
         PC_GRUPE = ["Classic", "VIP", "Super VIP"]
@@ -286,8 +416,13 @@ class _MainWindow(QMainWindow):
                     state=self.state,
                     get_sve_uredjaje=lambda: self.kartice,
                     uredjaj_id=u["id"],
+                    grupa=u["grupa"],
                 )
                 kartica.pazar_changed.connect(self._pazar_promijenjen)
+                kartica.session_changed.connect(self._session_event)
+                kartica.dodaj_artikal_requested.connect(
+                    self._fokusiraj_artikle_uredjaja
+                )
                 if row_lay is not None:
                     row_lay.addWidget(kartica)
                 self.kartice.append(kartica)
@@ -326,12 +461,20 @@ class _MainWindow(QMainWindow):
             k.osvjezi()
         self._osvjezi_rezervacije_kartica()
 
+    def _izracunaj_broj_kolona(self) -> int:
+        sirina = self._scroll.viewport().width() if hasattr(self, "_scroll") else 0
+        if sirina < 200:
+            sirina = self.width() - 154 - 210 - 32
+        return max(1, max(200, sirina) // (184 + 12))
+
     # ── Timer tick ─────────────────────────────────────────────
 
     def _tick(self):
         for k in self.kartice:
             k.osvjezi()
         self._bocni.osvjezi_ako_promijenjeno(self.kartice)
+        self._osvjezi_trajanje_smjene()
+        self._osvjezi_alert_bar()
 
     def _osvjezi_rezervacije_kartica(self):
         from services.rezervacije import dohvati_naredne_rezervacije_uredjaja
@@ -342,28 +485,119 @@ class _MainWindow(QMainWindow):
         rezervacije = dohvati_naredne_rezervacije_uredjaja(kartice_po_id)
         for uredjaj_id, kartica in kartice_po_id.items():
             kartica.postavi_narednu_rezervaciju(rezervacije.get(uredjaj_id))
+        self._osvjezi_alert_bar()
 
     # ── Status bar ─────────────────────────────────────────────
 
     def _osvjezi_status_bar(self):
+        self._lbl_radnik.setText(
+            f"Korisnik: {self.state.ime or self.state.username} ({self.state.rola})"
+        )
         smjena_id = self.state.trenutna_smjena_id
         if smjena_id is None:
-            self._lbl_radnik.setText("Nema smjene")
-            self._lbl_radnik.setStyleSheet("color: #ef4444; font-size: 11px;")
-            self._lbl_aktivno.setText("")
-            self._lbl_pazar.setText("")
+            self._smjena_pocetak = None
+            self._lbl_smjena.setText("NEMA OTVORENE SMJENE")
+            self._lbl_aktivno.setText(f"0/{len(self.kartice)} aktivno")
+            self._lbl_pazar.setText("Pazar: 0.00 KM")
             return
         podaci = dohvati_pazar_smjene(smjena_id)
         aktivni = sum(1 for k in self.kartice if k.session is not None)
         ukupno = len(self.kartice)
-        self._lbl_radnik.setText(f"● {self.state.ime_radnika}")
-        self._lbl_radnik.setStyleSheet("color: #22c55e; font-size: 11px; font-weight: 600;")
         self._lbl_aktivno.setText(f"{aktivni}/{ukupno} aktivno")
-        self._lbl_pazar.setText(f"{podaci['ukupno']:.2f} KM")
+        self._lbl_pazar.setText(f"Pazar: {podaci['ukupno']:.2f} KM")
+        self._osvjezi_trajanje_smjene()
+
+    def _osvjezi_trajanje_smjene(self):
+        smjena_id = self.state.trenutna_smjena_id
+        if smjena_id is None:
+            return
+        if self._smjena_pocetak is None:
+            self._lbl_smjena.setText(f"Smjena #{smjena_id}")
+            return
+        trajanje = max(0, int((datetime.now() - self._smjena_pocetak).total_seconds()))
+        sati, ostatak = divmod(trajanje, 3600)
+        minute = ostatak // 60
+        self._lbl_smjena.setText(
+            f"Smjena #{smjena_id} · {self._smjena_pocetak:%H:%M} · {sati:02d}:{minute:02d}"
+        )
+
+    def _osvjezi_alert_bar(self):
+        sada = datetime.now()
+        alerti: list[tuple[int, str, Optional[str]]] = [
+            (0, tekst, uredjaj) for tekst, uredjaj in self._operativna_upozorenja
+        ]
+        for kartica in self.kartice:
+            rezervacija = kartica.naredna_rezervacija
+            if rezervacija is not None:
+                pocetak = datetime.fromisoformat(rezervacija["pocetak"])
+                minuta = int((pocetak - sada).total_seconds() // 60)
+                if -60 <= minuta <= 30:
+                    kada = "u toku" if minuta < 0 else f"za {minuta} min"
+                    alerti.append((
+                        1 if minuta >= 10 else 0,
+                        f"⚠ {kartica.ime}: rezervacija {kada} · {rezervacija['ime_gosta']}",
+                        kartica.ime,
+                    ))
+            if kartica.session is not None and kartica.session.limit_sekundi is not None:
+                preostalo = kartica.session.preostalo_sekundi()
+                if preostalo is not None and preostalo <= 10 * 60:
+                    minuta = max(0, (preostalo + 59) // 60)
+                    tekst = (
+                        f"⚠ {kartica.ime}: sesija je istekla"
+                        if preostalo == 0
+                        else f"⚠ {kartica.ime}: {kartica.session.tip} ističe za {minuta} min"
+                    )
+                    alerti.append((0, tekst, kartica.ime))
+
+        if not alerti:
+            self._aktivni_alert_uredjaj = None
+            self._btn_alert.clearFocus()
+            self._alert_bar.hide()
+            return
+        alerti.sort(key=lambda stavka: (stavka[0], stavka[1]))
+        _, tekst, uredjaj = alerti[0]
+        self._aktivni_alert_uredjaj = uredjaj
+        dodatno = len(alerti) - 1
+        self._btn_alert.setText(
+            tekst if dodatno == 0 else f"{tekst}   (+{dodatno} upozorenja)"
+        )
+        self._alert_bar.show()
+
+    def _fokusiraj_alert(self):
+        kartica = next(
+            (k for k in self.kartice if k.ime == self._aktivni_alert_uredjaj),
+            None,
+        )
+        if kartica is not None:
+            self._scroll.ensureWidgetVisible(kartica, 24, 24)
+            kartica.setFocus(Qt.FocusReason.ShortcutFocusReason)
+
+    def _session_event(self, uredjaj: str):
+        kartica = next((k for k in self.kartice if k.ime == uredjaj), None)
+        if kartica is not None:
+            kartica.osvjezi()
+        self._bocni.osvjezi_ako_promijenjeno(self.kartice)
+        self._osvjezi_status_bar()
+        self._osvjezi_alert_bar()
+
+    def _fokusiraj_artikle_uredjaja(self, uredjaj: str):
+        self._bocni.fokusiraj_uredjaj(uredjaj)
+
+    def _refresh_trenutnog_prikaza(self):
+        for kartica in self.kartice:
+            kartica.osvjezi()
+        self._osvjezi_rezervacije_kartica()
+        self._bocni.osvjezi(self.kartice)
+        self._pazar_promijenjen()
+
+    def _prikazi_gaming(self):
+        self._scroll.verticalScrollBar().setValue(0)
+        self._scroll.setFocus()
 
     def _pazar_promijenjen(self):
         """Osvježi finansije i dashboard samo nakon poslovnog događaja."""
         self._osvjezi_status_bar()
+        self._osvjezi_alert_bar()
         if self._pazar_dlg and not self._pazar_dlg.isHidden():
             osvjezi = getattr(self._pazar_dlg, "osvjezi_podatke", None)
             if osvjezi is not None:
@@ -374,6 +608,7 @@ class _MainWindow(QMainWindow):
     def _provjeri_smjenu(self):
         aktivna = dohvati_aktivnu_smjenu()
         if not aktivna:
+            self._smjena_pocetak = None
             return
         pocetak = aktivna["pocetak"]
         pocetak_txt = pocetak[:19].replace("T", " ") if pocetak else "—"
@@ -384,7 +619,15 @@ class _MainWindow(QMainWindow):
             "Nastaviti sa ovom smjenom?"
         )
         if odg == QMessageBox.StandardButton.Yes:
-            self.state.postavi_smjenu(aktivna["id"], aktivna["radnik"])
+            actor = self.state.trenutni_korisnik()
+            if aktivna.get("user_id") != self.state.user_id:
+                try:
+                    preuzmi_smjenu(aktivna["id"], actor)
+                except Exception as e:
+                    QMessageBox.critical(self, "Preuzimanje smjene", str(e))
+                    return
+            self.state.postavi_smjenu(aktivna["id"], self.state.ime)
+            self._smjena_pocetak = datetime.fromisoformat(aktivna["pocetak"])
             self._pazar_promijenjen()
             self._obnovi_aktivne_sesije(aktivna["id"])
             for k in self.kartice:
@@ -398,6 +641,12 @@ class _MainWindow(QMainWindow):
             kartica = next((k for k in self.kartice if k.ime == row["uredjaj"]), None)
             if kartica is None:
                 nepostojeci_uredjaji.append(row["uredjaj"])
+                upozorenje = (
+                    f"⚠ {row['uredjaj']}: aktivna sesija nije obnovljena",
+                    row["uredjaj"],
+                )
+                if upozorenje not in self._operativna_upozorenja:
+                    self._operativna_upozorenja.append(upozorenje)
                 log.error(
                     f"Aktivna sesija za uređaj '{row['uredjaj']}' nije obnovljena "
                     "jer uređaj više ne postoji."
@@ -440,49 +689,36 @@ class _MainWindow(QMainWindow):
                 "Zatvori trenutnu smjenu prije otvaranja nove."
             )
             return
-        while True:
-            ime, ok = QInputDialog.getText(self, "Nova smjena", "Unesite ime radnika:")
-            if not ok:
+        actor = self.state.trenutni_korisnik()
+        try:
+            smjena_id = otvori_smjenu(actor)
+        except ValueError as e:
+            log.error(f"Otvaranje smjene odbijeno: {e}")
+            aktivna = dohvati_aktivnu_smjenu()
+            if aktivna is None:
+                QMessageBox.critical(self, "Greška", str(e))
                 return
-            ime = ime.strip()
-            if ime:
-                try:
-                    smjena_id = otvori_smjenu(ime)
-                except ValueError as e:
-                    log.error(f"Otvaranje smjene odbijeno: {e}")
-                    aktivna = dohvati_aktivnu_smjenu()
-                    if aktivna is None:
-                        QMessageBox.critical(self, "Greška", str(e))
-                        return
-                    pocetak = aktivna["pocetak"]
-                    pocetak_txt = pocetak[:19].replace("T", " ") if pocetak else "—"
-                    odg = QMessageBox.question(
-                        self, "Smjena je već otvorena u bazi",
-                        f"{e}\n\n"
-                        f"Početak: {pocetak_txt}\n\n"
-                        "Preuzeti tu smjenu i nastaviti rad?\n\n"
-                        "(Ako odbiješ, nećeš moći otvoriti novu smjenu dok ova ne bude "
-                        "zatvorena. Da bi je zatvorio, moraš je prvo preuzeti.)"
-                    )
-                    if odg == QMessageBox.StandardButton.Yes:
-                        self.state.postavi_smjenu(aktivna["id"], aktivna["radnik"])
-                        self._pazar_promijenjen()
-                        self._obnovi_aktivne_sesije(aktivna["id"])
-                        for k in self.kartice:
-                            k.osvjezi()
-                        self._bocni.osvjezi(self.kartice)
-                    return
-                except Exception as e:
-                    log.error(f"Otvaranje smjene nije uspjelo: {e}")
-                    QMessageBox.critical(self, "Greška", f"Smjena nije otvorena:\n{e}")
-                    return
-                self.state.postavi_smjenu(smjena_id, ime)
-                upisi_log(smjena_id, ime, "-", "OTVARANJE SMJENE")
+            pocetak = aktivna["pocetak"]
+            pocetak_txt = pocetak[:19].replace("T", " ") if pocetak else "—"
+            odg = QMessageBox.question(
+                self, "Smjena je već otvorena u bazi",
+                f"{e}\n\nPočetak: {pocetak_txt}\n\nPreuzeti smjenu?"
+            )
+            if odg == QMessageBox.StandardButton.Yes:
+                preuzmi_smjenu(aktivna["id"], actor)
+                self.state.postavi_smjenu(aktivna["id"], self.state.ime)
+                self._smjena_pocetak = datetime.fromisoformat(aktivna["pocetak"])
                 self._pazar_promijenjen()
-                return
-            odg = QMessageBox.question(self, "Info", "Morate otvoriti smjenu. Pokušati ponovo?")
-            if odg != QMessageBox.StandardButton.Yes:
-                return
+                self._obnovi_aktivne_sesije(aktivna["id"])
+                self._bocni.osvjezi(self.kartice)
+            return
+        except Exception as e:
+            log.error(f"Otvaranje smjene nije uspjelo: {e}")
+            QMessageBox.critical(self, "Greška", f"Smjena nije otvorena:\n{e}")
+            return
+        self.state.postavi_smjenu(smjena_id, self.state.ime)
+        self._smjena_pocetak = datetime.now()
+        self._pazar_promijenjen()
 
     def _meni_smjena(self):
         dlg = _DijalogSmjena(self)
@@ -518,8 +754,10 @@ class _MainWindow(QMainWindow):
             if QMessageBox.question(self, "Zatvaranje smjene", poruka) != QMessageBox.StandardButton.Yes:
                 return
 
-        zatvori_smjenu(smjena_id, aktivne_sesije, sank_kosarica)
-        upisi_log(smjena_id, self.state.ime_radnika, "-", "ZATVARANJE SMJENE")
+        zatvori_smjenu(
+            smjena_id, aktivne_sesije, sank_kosarica,
+            actor=self.state.trenutni_korisnik(),
+        )
 
         # Izvještaj
         podaci_izvj = {}
@@ -538,6 +776,7 @@ class _MainWindow(QMainWindow):
 
         # Reset
         self.state.zatvori_smjenu()
+        self._smjena_pocetak = None
         self._session_cache.clear()
         for k in self.kartice:
             k.session = None
@@ -569,7 +808,7 @@ class _MainWindow(QMainWindow):
             return
         self._rezervacije_dlg = RezervacijeDijalog(
             self,
-            radnik_getter=lambda: self.state.ime_radnika,
+            actor_getter=self.state.trenutni_korisnik,
             smjena_id_getter=lambda: self.state.trenutna_smjena_id,
         )
         self._rezervacije_dlg.rezervacije_changed.connect(
@@ -586,9 +825,37 @@ class _MainWindow(QMainWindow):
 
     def _otvori_admin(self):
         from ui.admin_panel import AdminPanel
-        panel = AdminPanel(self, reload_callback=self._ucitaj_uredjaje)
+        panel = AdminPanel(
+            self,
+            self.state.trenutni_korisnik(),
+            reload_callback=self._ucitaj_uredjaje,
+        )
         if panel.auth_ok:
             panel.exec()
+
+    def _otvori_korisnike(self):
+        from ui.korisnici import KorisniciDijalog
+        if self._korisnici_dlg and not self._korisnici_dlg.isHidden():
+            self._korisnici_dlg.raise_()
+            return
+        self._korisnici_dlg = KorisniciDijalog(
+            self.state.trenutni_korisnik(), self
+        )
+        self._korisnici_dlg.show()
+
+    def _otvori_audit(self):
+        from ui.audit import AuditDijalog
+        if self._audit_dlg and not self._audit_dlg.isHidden():
+            self._audit_dlg.raise_()
+            return
+        self._audit_dlg = AuditDijalog(self.state.trenutni_korisnik(), self)
+        self._audit_dlg.show()
+
+    def _potvrdi_odjavu(self):
+        if QMessageBox.question(
+            self, "Odjava", "Odjaviti trenutnog korisnika? Aktivna smjena ostaje otvorena."
+        ) == QMessageBox.StandardButton.Yes:
+            self.logout_requested.emit()
 
     # ── Resize event ───────────────────────────────────────────
 
@@ -597,8 +864,7 @@ class _MainWindow(QMainWindow):
         # Re-render on resize only when cards per row actually changes
         if not (self.kartice or self._svi_uredjaji):
             return
-        avail_w = max(200, self.width() - 210 - 32)
-        novi_max = max(1, avail_w // (160 + 14))
+        novi_max = self._izracunaj_broj_kolona()
         if novi_max == getattr(self, "_max_per_row", None):
             return
         self._render_kartice()

@@ -4,6 +4,7 @@ import pytest
 from PySide6.QtWidgets import QDialog, QMessageBox
 
 import ui.admin_panel as admin_module
+from models.user import UserIdentity
 from ui.admin_panel import AdminPanel
 from ui.dijalog_start import IzborStartaDijalog
 
@@ -27,20 +28,12 @@ def poruke(monkeypatch: pytest.MonkeyPatch) -> dict[str, list[tuple[str, str]]]:
 
 @pytest.fixture
 def admin_panel(qtbot, monkeypatch: pytest.MonkeyPatch) -> AdminPanel:
-    monkeypatch.setattr(
-        admin_module, "stanje_admin_lozinke", lambda: admin_module.AUTH_SPREMAN
-    )
-    monkeypatch.setattr(admin_module, "provjeri_admin_lozinku", lambda _lozinka: True)
-    monkeypatch.setattr(
-        admin_module.QInputDialog,
-        "getText",
-        lambda *args, **kwargs: ("test-lozinka", True),
-    )
     monkeypatch.setattr(admin_module, "ucitaj_artikle", lambda: [])
     monkeypatch.setattr(admin_module, "ucitaj_uredjaje", lambda: [])
-    monkeypatch.setattr(admin_module, "ucitaj_logove", lambda _filter=None: [])
 
-    panel = AdminPanel(None)
+    panel = AdminPanel(
+        None, UserIdentity(1, "admin", "Administrator", "admin")
+    )
     qtbot.addWidget(panel)
     assert panel.auth_ok is True
     return panel
@@ -114,7 +107,7 @@ def test_admin_novi_uredjaj_odbija_nevalidnu_cijenu(
     monkeypatch.setattr(
         admin_module,
         "dodaj_uredjaj",
-        lambda *args: pozivi.append(args),
+        lambda *args, **kwargs: pozivi.append((args, kwargs)),
     )
     admin_panel._entry_urd_ime.setText("PC Test")
     admin_panel._entry_urd_cena.setText(unos)
@@ -146,7 +139,7 @@ def test_admin_promjena_cijene_grupe_odbija_nevalidnu_vrijednost(
     monkeypatch.setattr(
         admin_module,
         "postavi_cijenu_grupe",
-        lambda *args: pozivi.append(args),
+        lambda *args, **kwargs: pozivi.append((args, kwargs)),
     )
     admin_panel._entry_cijene["Classic"].setText(unos)
 
@@ -200,14 +193,15 @@ def test_admin_validna_cijena_novog_uredjaja_prolazi_bez_upozorenja(
     monkeypatch.setattr(
         admin_module,
         "dodaj_uredjaj",
-        lambda *args: pozivi.append(args),
+        lambda *args, **kwargs: pozivi.append((args, kwargs)),
     )
     admin_panel._entry_urd_ime.setText("PC Test")
     admin_panel._entry_urd_cena.setText("2,50")
 
     admin_panel._dodaj_uredjaj()
 
-    assert pozivi == [("PC Test", 2.5, "PC", "Classic")]
+    assert pozivi[0][0] == ("PC Test", 2.5, "PC", "Classic")
+    assert pozivi[0][1]["actor"] == admin_panel.actor
     assert poruke["warning"] == []
 
 
@@ -218,8 +212,9 @@ def test_admin_validna_cijena_grupe_prolazi_bez_upozorenja(
 ):
     pozivi = []
 
-    def postavi(grupa, cijena):
+    def postavi(grupa, cijena, *, actor):
         pozivi.append((grupa, cijena))
+        assert actor == admin_panel.actor
         return 3
 
     monkeypatch.setattr(admin_module, "postavi_cijenu_grupe", postavi)

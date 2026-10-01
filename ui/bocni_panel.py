@@ -21,6 +21,7 @@ class BocniPanel(QFrame):
         smjena_id_getter: Callable,
         radnik_getter: Callable,
         parent=None,
+        actor_getter: Optional[Callable] = None,
     ):
         super().__init__(parent)
         self.setObjectName("bocniPanel")
@@ -28,6 +29,7 @@ class BocniPanel(QFrame):
 
         self.smjena_id_getter = smjena_id_getter
         self.radnik_getter = radnik_getter
+        self.actor_getter = actor_getter or AppState().trenutni_korisnik
 
         self.sank_kosarica: list[Artikal] = []
         self._artikli_db: list = []
@@ -265,6 +267,18 @@ class BocniPanel(QFrame):
         self._osvjezi_kosaricu_uredjaj(kartice)
         self._posljednje_stanje = self._potpis_stanja(kartice)
 
+    def fokusiraj_uredjaj(self, ime: str):
+        """Otvori quick POS za aktivni uređaj bez promjene poslovne logike."""
+        parent = self.parent()
+        while parent and not hasattr(parent, "kartice"):
+            parent = parent.parent()
+        kartice = parent.kartice if parent is not None else []
+        self.osvjezi(kartice)
+        indeks = self._combo_uredjaj.findText(ime)
+        if indeks >= 0:
+            self._combo_uredjaj.setCurrentIndex(indeks)
+            self._tabs.setCurrentIndex(1)
+
     def _refresh_btn_states(self, layout: QVBoxLayout, enabled: bool):
         for i in range(layout.count()):
             item = layout.itemAt(i)
@@ -384,13 +398,12 @@ class BocniPanel(QFrame):
             return
 
         smjena_id = self.smjena_id_getter()
-        radnik = self.radnik_getter()
+        actor = self.actor_getter()
 
         from services.pazar import naplati_sank_kosaricu
-        ukupno = naplati_sank_kosaricu(self.sank_kosarica, smjena_id)
-
-        from services.logger import upisi_log
-        upisi_log(smjena_id, radnik, "Šank", f"NAPLATA ŠANK — {ukupno:.2f} KM")
+        ukupno = naplati_sank_kosaricu(
+            self.sank_kosarica, smjena_id, actor=actor
+        )
 
         self.sank_kosarica = []
         self._osvjezi_kosaricu_sank()

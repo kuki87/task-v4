@@ -126,11 +126,11 @@ class RezervacijaFormaDijalog(QDialog):
 class RezervacijeDijalog(QDialog):
     rezervacije_changed = Signal()
 
-    def __init__(self, parent=None, radnik_getter=None, smjena_id_getter=None):
+    def __init__(self, parent=None, actor_getter=None, smjena_id_getter=None):
         super().__init__(parent)
         self.setWindowTitle("Rezervacije")
         self.resize(920, 620)
-        self._radnik_getter = radnik_getter or (lambda: "")
+        self._actor_getter = actor_getter or (lambda: None)
         self._smjena_id_getter = smjena_id_getter or (lambda: None)
         self._redovi = []
         self._build_ui()
@@ -265,18 +265,18 @@ class RezervacijeDijalog(QDialog):
         self.btn_otkazi.setEnabled(STATUS_OTKAZANO in dozvoljeni)
         self.btn_no_show.setEnabled(STATUS_NO_SHOW in dozvoljeni)
 
-    def _radnik(self):
-        radnik = (self._radnik_getter() or "").strip()
-        if not radnik:
+    def _actor(self):
+        actor = self._actor_getter()
+        if actor is None:
             QMessageBox.warning(
-                self, "Rezervacije", "Za ovu akciju mora biti otvorena smjena."
+                self, "Rezervacije", "Korisnik nije prijavljen."
             )
             return None
-        return radnik
+        return actor
 
     def _nova(self):
-        radnik = self._radnik()
-        if radnik is None:
+        actor = self._actor()
+        if actor is None:
             return
         uredjaji = ucitaj_uredjaje()
         forma = RezervacijaFormaDijalog(self, uredjaji)
@@ -285,7 +285,7 @@ class RezervacijeDijalog(QDialog):
         try:
             kreiraj_rezervaciju(
                 **forma.rezultat,
-                radnik=radnik,
+                actor=actor,
                 smjena_id=self._smjena_id_getter(),
             )
         except ValueError as e:
@@ -295,8 +295,8 @@ class RezervacijeDijalog(QDialog):
 
     def _izmijeni(self):
         rezervacija = self._odabrana()
-        radnik = self._radnik()
-        if rezervacija is None or radnik is None:
+        actor = self._actor()
+        if rezervacija is None or actor is None:
             return
         forma = RezervacijaFormaDijalog(self, ucitaj_uredjaje(), rezervacija)
         if forma.exec() != QDialog.DialogCode.Accepted or forma.rezultat is None:
@@ -305,7 +305,7 @@ class RezervacijeDijalog(QDialog):
             izmijeni_rezervaciju(
                 rezervacija["id"],
                 **forma.rezultat,
-                radnik=radnik,
+                actor=actor,
                 smjena_id=self._smjena_id_getter(),
             )
         except ValueError as e:
@@ -315,12 +315,12 @@ class RezervacijeDijalog(QDialog):
 
     def _promijeni_status(self, status):
         rezervacija = self._odabrana()
-        radnik = self._radnik()
-        if rezervacija is None or radnik is None:
+        actor = self._actor()
+        if rezervacija is None or actor is None:
             return
         try:
             promijeni_status_rezervacije(
-                rezervacija["id"], status, radnik, self._smjena_id_getter()
+                rezervacija["id"], status, actor, self._smjena_id_getter()
             )
         except ValueError as e:
             QMessageBox.warning(self, "Rezervacija", str(e))

@@ -6,7 +6,13 @@ import pytest
 
 import database.db as db_module
 import services.rezervacije as rezervacije
+from models.user import UserIdentity
 from services.uredjaji import brisi_uredjaj
+from tests.helpers import napravi_test_korisnika
+
+
+TEST_ACTOR = UserIdentity(1, "tester", "Tester", "admin")
+ANA_ACTOR = UserIdentity(2, "ana", "Ana", "admin")
 
 
 @pytest.fixture
@@ -15,6 +21,10 @@ def db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(db_module, "DB_PATH", str(tmp_path / "rezervacije.sqlite3"))
     db_module.inicijalizuj_bazu()
     conn = db_module.get_db()
+    assert napravi_test_korisnika(conn) == TEST_ACTOR
+    assert napravi_test_korisnika(
+        conn, username="ana", ime="Ana"
+    ) == ANA_ACTOR
     conn.executemany(
         "INSERT INTO uredjaji (ime, cena, tip, grupa) VALUES (?, ?, ?, ?)",
         [("PC1", 2.0, "PC", "Classic"), ("PC2", 2.0, "PC", "Classic")],
@@ -39,7 +49,8 @@ def _kreiraj(db, *, uredjaj="PC1", gost="Marko", pocetak=None, kraj=None, **kwar
     if pocetak is None:
         pocetak, kraj = _termin()
     return rezervacije.kreiraj_rezervaciju(
-        _uredjaj(db, uredjaj), gost, pocetak, kraj, "Tester", **kwargs
+        _uredjaj(db, uredjaj), gost, pocetak, kraj,
+        actor=TEST_ACTOR, **kwargs
     )
 
 
@@ -148,7 +159,7 @@ def test_isti_termin_na_drugom_uredjaju_je_dozvoljen(db):
 def test_otkazana_rezervacija_ne_blokira_termin(db):
     pocetak, kraj = _termin()
     rid = _kreiraj(db, pocetak=pocetak, kraj=kraj)
-    rezervacije.otkazi_rezervaciju(rid, "Tester")
+    rezervacije.otkazi_rezervaciju(rid, TEST_ACTOR)
     novi = _kreiraj(db, gost="Drugi", pocetak=pocetak, kraj=kraj)
     assert novi != rid
 
@@ -156,7 +167,7 @@ def test_otkazana_rezervacija_ne_blokira_termin(db):
 def test_stigao_status_i_dalje_blokira_termin(db):
     pocetak, kraj = _termin()
     rid = _kreiraj(db, pocetak=pocetak, kraj=kraj)
-    rezervacije.promijeni_status_rezervacije(rid, "stigao", "Tester")
+    rezervacije.promijeni_status_rezervacije(rid, "stigao", TEST_ACTOR)
     with pytest.raises(ValueError, match="preklapa"):
         _kreiraj(db, gost="Drugi", pocetak=pocetak, kraj=kraj)
 
@@ -167,18 +178,18 @@ def test_izmjena_iskljucuje_vlastiti_id_ali_otkriva_drugi_konflikt(db):
     rid = _kreiraj(db, pocetak=p1, kraj=k1)
     _kreiraj(db, gost="Drugi", pocetak=p2, kraj=k2)
     rezervacije.izmijeni_rezervaciju(
-        rid, _uredjaj(db), "Marko", p1, k1, "Tester"
+        rid, _uredjaj(db), "Marko", p1, k1, actor=TEST_ACTOR
     )
     with pytest.raises(ValueError, match="preklapa"):
         rezervacije.izmijeni_rezervaciju(
-            rid, _uredjaj(db), "Marko", p2, k2, "Tester"
+            rid, _uredjaj(db), "Marko", p2, k2, actor=TEST_ACTOR
         )
 
 
 def test_dozvoljene_statusne_tranzicije(db):
     rid = _kreiraj(db)
-    rezervacije.promijeni_status_rezervacije(rid, "stigao", "Ana")
-    rezervacije.promijeni_status_rezervacije(rid, "zavrseno", "Ana")
+    rezervacije.promijeni_status_rezervacije(rid, "stigao", ANA_ACTOR)
+    rezervacije.promijeni_status_rezervacije(rid, "zavrseno", ANA_ACTOR)
     assert rezervacije.dohvati_rezervaciju(rid)["status"] == "zavrseno"
 
 
@@ -186,13 +197,15 @@ def test_dozvoljene_statusne_tranzicije(db):
 def test_nedozvoljena_statusna_tranzicija_se_odbija(db, novi_status):
     rid = _kreiraj(db)
     with pytest.raises(ValueError):
-        rezervacije.promijeni_status_rezervacije(rid, novi_status, "Tester")
+        rezervacije.promijeni_status_rezervacije(
+            rid, novi_status, TEST_ACTOR
+        )
 
 
 def test_zavrsena_rezervacija_ostaje_u_historiji(db):
     rid = _kreiraj(db)
-    rezervacije.promijeni_status_rezervacije(rid, "stigao", "Tester")
-    rezervacije.promijeni_status_rezervacije(rid, "zavrseno", "Tester")
+    rezervacije.promijeni_status_rezervacije(rid, "stigao", TEST_ACTOR)
+    rezervacije.promijeni_status_rezervacije(rid, "zavrseno", TEST_ACTOR)
     assert [red["id"] for red in rezervacije.dohvati_rezervacije()] == [rid]
 
 
@@ -231,9 +244,10 @@ def test_svaka_izmjena_upisuje_audit_bez_telefona(db):
     pocetak, kraj = _termin()
     rid = _kreiraj(db, pocetak=pocetak, kraj=kraj, telefon="061-TAJNO")
     rezervacije.izmijeni_rezervaciju(
-        rid, _uredjaj(db), "Marko", pocetak, kraj, "Ana", telefon="062-TAJNO"
+        rid, _uredjaj(db), "Marko", pocetak, kraj,
+        actor=ANA_ACTOR, telefon="062-TAJNO"
     )
-    rezervacije.promijeni_status_rezervacije(rid, "stigao", "Ana")
+    rezervacije.promijeni_status_rezervacije(rid, "stigao", ANA_ACTOR)
     logovi = db.execute(
         "SELECT radnik, uredjaj, akcija FROM logovi ORDER BY id"
     ).fetchall()
@@ -247,7 +261,7 @@ def test_kreiranje_se_rollbackuje_ako_audit_padne(db, monkeypatch):
     def greska(*_args, **_kwargs):
         raise RuntimeError("audit nije dostupan")
 
-    monkeypatch.setattr(rezervacije, "upisi_log_u_transakciji", greska)
+    monkeypatch.setattr(rezervacije, "upisi_audit_u_transakciji", greska)
     with pytest.raises(RuntimeError, match="audit"):
         _kreiraj(db)
     assert db.execute("SELECT COUNT(*) FROM rezervacije").fetchone()[0] == 0
@@ -256,11 +270,13 @@ def test_kreiranje_se_rollbackuje_ako_audit_padne(db, monkeypatch):
 def test_status_se_rollbackuje_ako_audit_padne(db, monkeypatch):
     rid = _kreiraj(db)
     monkeypatch.setattr(
-        rezervacije, "upisi_log_u_transakciji",
+        rezervacije, "upisi_audit_u_transakciji",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("audit")),
     )
     with pytest.raises(RuntimeError):
-        rezervacije.promijeni_status_rezervacije(rid, "stigao", "Tester")
+        rezervacije.promijeni_status_rezervacije(
+            rid, "stigao", TEST_ACTOR
+        )
     assert rezervacije.dohvati_rezervaciju(rid)["status"] == "rezervisano"
 
 
@@ -268,8 +284,8 @@ def test_uredjaj_sa_bilo_kojom_rezervacijom_ne_moze_biti_obrisan(db):
     uid = _uredjaj(db)
     rid = _kreiraj(db)
     with pytest.raises(ValueError, match="aktivnu rezervaciju"):
-        brisi_uredjaj(uid)
-    rezervacije.otkazi_rezervaciju(rid, "Tester")
+        brisi_uredjaj(uid, actor=TEST_ACTOR)
+    rezervacije.otkazi_rezervaciju(rid, TEST_ACTOR)
     with pytest.raises(ValueError, match="historiju rezervacija"):
-        brisi_uredjaj(uid)
+        brisi_uredjaj(uid, actor=TEST_ACTOR)
     assert db.execute("SELECT 1 FROM uredjaji WHERE id = ?", (uid,)).fetchone()

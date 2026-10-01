@@ -4,7 +4,8 @@ from threading import RLock
 from typing import Iterable, Optional
 
 from database.db import get_db
-from services.logger import upisi_log_u_transakciji
+from services.audit import upisi_audit_u_transakciji
+from services.permissions import RESERVATION_MANAGE, zahtijevaj_dozvolu
 
 
 STATUS_REZERVISANO = "rezervisano"
@@ -119,20 +120,13 @@ def provjeri_konflikt_rezervacije(
     return get_db().execute(sql, parametri).fetchone()
 
 
-def _radnik(radnik: str) -> str:
-    vrijednost = _tekst(radnik)
-    if not vrijednost:
-        raise ValueError("Radnik nije prijavljen.")
-    return vrijednost
-
-
 @_serijalizuj_upis
 def kreiraj_rezervaciju(
     uredjaj_id: int,
     ime_gosta: str,
     pocetak,
     kraj,
-    radnik: str,
+    actor,
     telefon: Optional[str] = None,
     napomena: Optional[str] = None,
     smjena_id: Optional[int] = None,
@@ -140,7 +134,7 @@ def kreiraj_rezervaciju(
     pocetak_dt, kraj_dt = _provjeri_osnovne_podatke(
         uredjaj_id, ime_gosta, pocetak, kraj
     )
-    radnik = _radnik(radnik)
+    actor = zahtijevaj_dozvolu(actor, RESERVATION_MANAGE)
     conn = get_db()
     sada = datetime.now().replace(microsecond=0).isoformat()
     try:
@@ -155,8 +149,9 @@ def kreiraj_rezervaciju(
         cursor = conn.execute(
             """INSERT INTO rezervacije
                (uredjaj_id, ime_gosta, telefon, pocetak, kraj, status,
-                napomena, kreirano, izmijenjeno, kreirao_radnik)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                napomena, kreirano, izmijenjeno, kreirao_radnik,
+                kreirao_user_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 uredjaj_id,
                 ime_gosta.strip(),
@@ -167,16 +162,20 @@ def kreiraj_rezervaciju(
                 _tekst(napomena),
                 sada,
                 sada,
-                radnik,
+                actor.ime,
+                actor.id,
             ),
         )
         rezervacija_id = cursor.lastrowid
-        upisi_log_u_transakciji(
+        upisi_audit_u_transakciji(
             conn,
-            smjena_id,
-            radnik,
-            red["ime"],
-            f"REZERVACIJA #{rezervacija_id} KREIRANA ({pocetak_dt.isoformat()}–{kraj_dt.isoformat()})",
+            actor,
+            "RESERVATION_CREATED",
+            "rezervacija",
+            entitet_id=rezervacija_id,
+            smjena_id=smjena_id,
+            uredjaj=red["ime"],
+            detalj=f"Termin {pocetak_dt.isoformat()}–{kraj_dt.isoformat()}.",
         )
         conn.commit()
         return rezervacija_id
@@ -202,7 +201,7 @@ def izmijeni_rezervaciju(
     ime_gosta: str,
     pocetak,
     kraj,
-    radnik: str,
+    actor,
     telefon: Optional[str] = None,
     napomena: Optional[str] = None,
     smjena_id: Optional[int] = None,
@@ -210,7 +209,7 @@ def izmijeni_rezervaciju(
     pocetak_dt, kraj_dt = _provjeri_osnovne_podatke(
         uredjaj_id, ime_gosta, pocetak, kraj
     )
-    radnik = _radnik(radnik)
+    actor = zahtijevaj_dozvolu(actor, RESERVATION_MANAGE)
     conn = get_db()
     try:
         conn.execute("BEGIN IMMEDIATE")
@@ -246,12 +245,15 @@ def izmijeni_rezervaciju(
                 rezervacija_id,
             ),
         )
-        upisi_log_u_transakciji(
+        upisi_audit_u_transakciji(
             conn,
-            smjena_id,
-            radnik,
-            red["ime"],
-            f"REZERVACIJA #{rezervacija_id} IZMIJENJENA (status: {postojeca['status']})",
+            actor,
+            "RESERVATION_UPDATED",
+            "rezervacija",
+            entitet_id=rezervacija_id,
+            smjena_id=smjena_id,
+            uredjaj=red["ime"],
+            detalj=f"Izmijenjena; status {postojeca['status']}.",
         )
         conn.commit()
     except Exception:
@@ -263,12 +265,12 @@ def izmijeni_rezervaciju(
 def promijeni_status_rezervacije(
     rezervacija_id: int,
     novi_status: str,
-    radnik: str,
+    actor,
     smjena_id: Optional[int] = None,
 ) -> None:
     if novi_status not in STATUSI_REZERVACIJE:
         raise ValueError("Nepoznat status rezervacije.")
-    radnik = _radnik(radnik)
+    actor = zahtijevaj_dozvolu(actor, RESERVATION_MANAGE)
     conn = get_db()
     try:
         conn.execute("BEGIN IMMEDIATE")
@@ -288,12 +290,21 @@ def promijeni_status_rezervacije(
                 rezervacija_id,
             ),
         )
-        upisi_log_u_transakciji(
+        akcije_statusa = {
+            STATUS_STIGAO: "RESERVATION_ARRIVED",
+            STATUS_ZAVRSENO: "RESERVATION_FINISHED",
+            STATUS_OTKAZANO: "RESERVATION_CANCELLED",
+            STATUS_NO_SHOW: "RESERVATION_NO_SHOW",
+        }
+        upisi_audit_u_transakciji(
             conn,
-            smjena_id,
-            radnik,
-            postojeca["uredjaj"],
-            f"REZERVACIJA #{rezervacija_id}: {stari_status} → {novi_status}",
+            actor,
+            akcije_statusa[novi_status],
+            "rezervacija",
+            entitet_id=rezervacija_id,
+            smjena_id=smjena_id,
+            uredjaj=postojeca["uredjaj"],
+            detalj=f"Status: {stari_status} → {novi_status}.",
         )
         conn.commit()
     except Exception:
@@ -302,10 +313,10 @@ def promijeni_status_rezervacije(
 
 
 def otkazi_rezervaciju(
-    rezervacija_id: int, radnik: str, smjena_id: Optional[int] = None
+    rezervacija_id: int, actor, smjena_id: Optional[int] = None
 ) -> None:
     promijeni_status_rezervacije(
-        rezervacija_id, STATUS_OTKAZANO, radnik, smjena_id
+        rezervacija_id, STATUS_OTKAZANO, actor, smjena_id
     )
 
 

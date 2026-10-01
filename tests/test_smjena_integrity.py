@@ -5,6 +5,7 @@ import pytest
 
 import database.db as db_module
 import services.smjena as smjena_service
+from tests.helpers import napravi_test_korisnika
 
 
 @pytest.fixture
@@ -27,11 +28,13 @@ def db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 
 def test_otvorena_smjena_blokira_drugu_i_cuva_value_error_ugovor(db):
-    prva_id = smjena_service.otvori_smjenu("Ana")
+    ana = napravi_test_korisnika(db, username="ana", ime="Ana")
+    boris = napravi_test_korisnika(db, username="boris", ime="Boris")
+    prva_id = smjena_service.otvori_smjenu(ana)
     prije = dict(db.execute("SELECT * FROM smjene WHERE id = ?", (prva_id,)).fetchone())
 
     with pytest.raises(ValueError) as greska:
-        smjena_service.otvori_smjenu("Boris")
+        smjena_service.otvori_smjenu(boris)
 
     assert "Ana" in str(greska.value)
     assert db.execute("SELECT COUNT(*) FROM smjene").fetchone()[0] == 1
@@ -43,14 +46,17 @@ def test_otvorena_smjena_blokira_drugu_i_cuva_value_error_ugovor(db):
         "id": prva_id,
         "pocetak": prije["pocetak"],
         "radnik": "Ana",
+        "user_id": ana.id,
     }
 
 
 def test_zatvorena_smjena_ne_blokira_otvaranje_nove(db):
-    prva_id = smjena_service.otvori_smjenu("Ana")
-    rezultat = smjena_service.zatvori_smjenu(prva_id, {}, [])
+    ana = napravi_test_korisnika(db, username="ana", ime="Ana")
+    boris = napravi_test_korisnika(db, username="boris", ime="Boris")
+    prva_id = smjena_service.otvori_smjenu(ana)
+    rezultat = smjena_service.zatvori_smjenu(prva_id, {}, [], actor=ana)
 
-    druga_id = smjena_service.otvori_smjenu("Boris")
+    druga_id = smjena_service.otvori_smjenu(boris)
 
     assert druga_id != prva_id
     prva = db.execute("SELECT * FROM smjene WHERE id = ?", (prva_id,)).fetchone()
@@ -61,6 +67,9 @@ def test_zatvorena_smjena_ne_blokira_otvaranje_nove(db):
 
 
 def test_zatecena_otvorena_smjena_ostaje_netaknuta_do_zatvaranja(db):
+    novi = napravi_test_korisnika(
+        db, username="novi", ime="Novi radnik"
+    )
     pocetak = (datetime.now() - timedelta(hours=8)).isoformat()
     cursor = db.execute(
         """INSERT INTO smjene (pocetak, kraj, radnik, pazar)
@@ -90,14 +99,15 @@ def test_zatecena_otvorena_smjena_ostaje_netaknuta_do_zatvaranja(db):
         "id": smjena_id,
         "pocetak": pocetak,
         "radnik": "Zatečeni radnik",
+        "user_id": None,
     }
     with pytest.raises(ValueError):
-        smjena_service.otvori_smjenu("Novi radnik")
+        smjena_service.otvori_smjenu(novi)
     assert dict(
         db.execute("SELECT * FROM smjene WHERE id = ?", (smjena_id,)).fetchone()
     ) == prije
 
-    smjena_service.zatvori_smjenu(smjena_id, {}, [])
+    smjena_service.zatvori_smjenu(smjena_id, {}, [], actor=novi)
     zatvorena = dict(
         db.execute("SELECT * FROM smjene WHERE id = ?", (smjena_id,)).fetchone()
     )
@@ -106,5 +116,5 @@ def test_zatecena_otvorena_smjena_ostaje_netaknuta_do_zatvaranja(db):
     assert zatvorena["kraj"] is not None
     assert zatvorena["pazar"] == pytest.approx(17.25)
 
-    nova_id = smjena_service.otvori_smjenu("Novi radnik")
+    nova_id = smjena_service.otvori_smjenu(novi)
     assert nova_id != smjena_id

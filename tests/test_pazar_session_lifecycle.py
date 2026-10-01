@@ -10,6 +10,7 @@ import services.smjena as smjena_service
 from models.artikal import Artikal
 from models.session_state import SessionState
 from ui.kartica_uredjaja import UredjajKartica
+from tests.helpers import napravi_test_korisnika
 
 
 @pytest.fixture
@@ -40,6 +41,11 @@ def _nova_sesija(*, sati_unazad: int = 1) -> SessionState:
     )
 
 
+@pytest.fixture
+def actor(db):
+    return napravi_test_korisnika(db)
+
+
 def _dodaj_staru_smjenu(db) -> int:
     vrijeme = (datetime.now() - timedelta(days=1)).isoformat()
     cursor = db.execute(
@@ -51,15 +57,18 @@ def _dodaj_staru_smjenu(db) -> int:
     return cursor.lastrowid
 
 
-def test_ponovljeno_dodavanje_artikla_cuva_sve_komade_do_naplate(db):
-    smjena_id = smjena_service.otvori_smjenu("Tester")
+def test_ponovljeno_dodavanje_artikla_cuva_sve_komade_do_naplate(db, actor):
+    smjena_id = smjena_service.otvori_smjenu(actor)
     sesija = _nova_sesija()
-    pazar_service.start_sesija("PC 1", sesija, smjena_id)
+    pazar_service.start_sesija("PC 1", sesija, smjena_id, actor=actor)
 
     # Pozivamo stvarni handler bez kreiranja Qt widgeta, pa pytest-qt nije potreban.
     kartica = SimpleNamespace(
         kosarica=[],
-        state=SimpleNamespace(trenutna_smjena_id=smjena_id),
+        state=SimpleNamespace(
+            trenutna_smjena_id=smjena_id,
+            trenutni_korisnik=lambda: actor,
+        ),
         ime="PC 1",
         osvjezi=lambda: None,
     )
@@ -82,6 +91,7 @@ def test_ponovljeno_dodavanje_artikla_cuva_sve_komade_do_naplate(db):
         [Artikal("Kafa", 1.50, 3)],
         2.0,
         smjena_id,
+        actor=actor,
     )
 
     stanje = db.execute(
@@ -106,11 +116,11 @@ def test_ponovljeno_dodavanje_artikla_cuva_sve_komade_do_naplate(db):
     assert artikal_pazar["ukupno"] == pytest.approx(4.50)
 
 
-def test_start_i_naplata_koriste_jedan_lifecycle_red(db):
-    smjena_id = smjena_service.otvori_smjenu("Tester")
+def test_start_i_naplata_koriste_jedan_lifecycle_red(db, actor):
+    smjena_id = smjena_service.otvori_smjenu(actor)
     sesija = _nova_sesija()
 
-    pazar_service.start_sesija("PC 1", sesija, smjena_id)
+    pazar_service.start_sesija("PC 1", sesija, smjena_id, actor=actor)
 
     redovi_prije = db.execute(
         "SELECT * FROM sesije_log WHERE smjena_id = ? AND uredjaj = ?",
@@ -122,7 +132,7 @@ def test_start_i_naplata_koriste_jedan_lifecycle_red(db):
     assert redovi_prije[0]["iznos"] is None
 
     pazar_service.naplati_uredjaj(
-        "PC 1", sesija, [], 2.0, smjena_id
+        "PC 1", sesija, [], 2.0, smjena_id, actor=actor
     )
 
     redovi_poslije = db.execute(
@@ -138,14 +148,14 @@ def test_start_i_naplata_koriste_jedan_lifecycle_red(db):
     ).fetchone()[0] == 0
 
 
-def test_zatvaranje_smjene_naplacuje_sve_sesije_i_pazar_racuna_iz_baze(db):
-    smjena_id = smjena_service.otvori_smjenu("Tester")
+def test_zatvaranje_smjene_naplacuje_sve_sesije_i_pazar_racuna_iz_baze(db, actor):
+    smjena_id = smjena_service.otvori_smjenu(actor)
     prva = _nova_sesija(sati_unazad=1)
     druga = _nova_sesija(sati_unazad=2)
-    pazar_service.start_sesija("PC 1", prva, smjena_id)
-    pazar_service.start_sesija("PC 2", druga, smjena_id)
+    pazar_service.start_sesija("PC 1", prva, smjena_id, actor=actor)
+    pazar_service.start_sesija("PC 2", druga, smjena_id, actor=actor)
     pazar_service.dodaj_artikal_na_uredjaj(
-        smjena_id, "PC 1", "Sok", 2, 1.50
+        smjena_id, "PC 1", "Sok", 2, 1.50, actor=actor
     )
 
     vrijeme = datetime.now().isoformat()
@@ -164,6 +174,7 @@ def test_zatvaranje_smjene_naplacuje_sve_sesije_i_pazar_racuna_iz_baze(db):
             "PC 2": (druga, [], 2.0),
         },
         [],
+        actor=actor,
     )
 
     assert db.execute(
@@ -205,15 +216,15 @@ def test_zatvaranje_smjene_naplacuje_sve_sesije_i_pazar_racuna_iz_baze(db):
 
 
 def test_greska_jedne_naplate_rollbackuje_cijelo_zatvaranje_smjene(
-    db, monkeypatch: pytest.MonkeyPatch
+    db, actor, monkeypatch: pytest.MonkeyPatch
 ):
-    smjena_id = smjena_service.otvori_smjenu("Tester")
+    smjena_id = smjena_service.otvori_smjenu(actor)
     prva = _nova_sesija(sati_unazad=1)
     druga = _nova_sesija(sati_unazad=2)
-    pazar_service.start_sesija("PC 1", prva, smjena_id)
-    pazar_service.start_sesija("PC 2", druga, smjena_id)
+    pazar_service.start_sesija("PC 1", prva, smjena_id, actor=actor)
+    pazar_service.start_sesija("PC 2", druga, smjena_id, actor=actor)
     pazar_service.dodaj_artikal_na_uredjaj(
-        smjena_id, "PC 1", "Kafa", 1, 1.50
+        smjena_id, "PC 1", "Kafa", 1, 1.50, actor=actor
     )
 
     stvarna_naplata = pazar_service.naplati_uredjaj
@@ -238,6 +249,7 @@ def test_greska_jedne_naplate_rollbackuje_cijelo_zatvaranje_smjene(
                 "PC 2": (druga, [], 2.0),
             },
             [],
+            actor=actor,
         )
 
     assert pozivi == ["PC 1", "PC 2"]
@@ -262,11 +274,11 @@ def test_greska_jedne_naplate_rollbackuje_cijelo_zatvaranje_smjene(
     assert smjena["pazar"] == pytest.approx(0.0)
 
 
-def test_transfer_mijenja_samo_aktivnu_sesiju_i_nenaplacene_artikle(db):
+def test_transfer_mijenja_samo_aktivnu_sesiju_i_nenaplacene_artikle(db, actor):
     stara_smjena_id = _dodaj_staru_smjenu(db)
-    smjena_id = smjena_service.otvori_smjenu("Tester")
+    smjena_id = smjena_service.otvori_smjenu(actor)
     sesija = _nova_sesija()
-    pazar_service.start_sesija("PC 1", sesija, smjena_id)
+    pazar_service.start_sesija("PC 1", sesija, smjena_id, actor=actor)
     aktivni_id = db.execute(
         """SELECT id FROM sesije_log
            WHERE smjena_id = ? AND uredjaj = ? AND vreme_kraja IS NULL""",
@@ -281,7 +293,7 @@ def test_transfer_mijenja_samo_aktivnu_sesiju_i_nenaplacene_artikle(db):
         (stara_smjena_id, "PC 1", staro_vrijeme, staro_vrijeme, 2.0, "neograniceno"),
     ).lastrowid
     pazar_service.dodaj_artikal_na_uredjaj(
-        smjena_id, "PC 1", "Sok", 2, 2.0
+        smjena_id, "PC 1", "Sok", 2, 2.0, actor=actor
     )
     naplaceni_id = db.execute(
         """INSERT INTO prodaja_artikala
@@ -298,7 +310,7 @@ def test_transfer_mijenja_samo_aktivnu_sesiju_i_nenaplacene_artikle(db):
     db.commit()
 
     pazar_service.prebaci_sesiju_na_uredjaj(
-        smjena_id, "Tester", "PC 1", "PC 2"
+        smjena_id, "PC 1", "PC 2", actor=actor
     )
 
     aktivna = db.execute(
@@ -338,7 +350,8 @@ def test_transfer_mijenja_samo_aktivnu_sesiju_i_nenaplacene_artikle(db):
         "SELECT COUNT(*) FROM sesije_log WHERE id = ?", (aktivni_id,)
     ).fetchone()[0]
     pazar_service.naplati_uredjaj(
-        "PC 2", sesija, [Artikal("Sok", 2.0, 2)], 2.0, smjena_id
+        "PC 2", sesija, [Artikal("Sok", 2.0, 2)], 2.0, smjena_id,
+        actor=actor,
     )
     zatvorena = db.execute(
         "SELECT uredjaj, vreme_kraja FROM sesije_log WHERE id = ?",
@@ -359,19 +372,19 @@ def test_transfer_mijenja_samo_aktivnu_sesiju_i_nenaplacene_artikle(db):
     ).fetchone()[0] == 1
 
 
-def test_transfer_na_uredjaj_sa_aktivnom_sesijom_se_odbija(db):
-    smjena_id = smjena_service.otvori_smjenu("Tester")
+def test_transfer_na_uredjaj_sa_aktivnom_sesijom_se_odbija(db, actor):
+    smjena_id = smjena_service.otvori_smjenu(actor)
     izvorna = _nova_sesija()
     ciljna = _nova_sesija()
-    pazar_service.start_sesija("PC 1", izvorna, smjena_id)
-    pazar_service.start_sesija("PC 2", ciljna, smjena_id)
+    pazar_service.start_sesija("PC 1", izvorna, smjena_id, actor=actor)
+    pazar_service.start_sesija("PC 2", ciljna, smjena_id, actor=actor)
     pazar_service.dodaj_artikal_na_uredjaj(
-        smjena_id, "PC 1", "Kafa", 1, 1.50
+        smjena_id, "PC 1", "Kafa", 1, 1.50, actor=actor
     )
 
     with pytest.raises(ValueError):
         pazar_service.prebaci_sesiju_na_uredjaj(
-            smjena_id, "Tester", "PC 1", "PC 2"
+            smjena_id, "PC 1", "PC 2", actor=actor
         )
 
     aktivni = db.execute(
@@ -387,5 +400,7 @@ def test_transfer_na_uredjaj_sa_aktivnom_sesijom_se_odbija(db):
     ).fetchone()
     assert (artikal["uredjaj"], artikal["naplaceno"]) == ("PC 1", 0)
     assert db.execute(
-        "SELECT COUNT(*) FROM logovi WHERE smjena_id = ?", (smjena_id,)
+        """SELECT COUNT(*) FROM logovi
+           WHERE smjena_id = ? AND akcija = 'SESSION_TRANSFERRED'""",
+        (smjena_id,),
     ).fetchone()[0] == 0

@@ -6,7 +6,7 @@ from typing import Optional, Callable
 from PySide6.QtWidgets import (
     QFrame, QVBoxLayout, QHBoxLayout, QLabel, QWidget,
     QPushButton, QProgressBar, QMessageBox, QDialog,
-    QListWidget, QListWidgetItem, QDialogButtonBox,
+    QListWidget, QListWidgetItem, QDialogButtonBox, QToolButton, QMenu,
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
@@ -21,6 +21,7 @@ from constants import CIJENA_MINECRAFT
 _STATUS_STYLE = {
     "slobodno":  ("#1e2433", "#1e2433", "#334155", "#334155", "#1e2d3d"),
     "u_radu":    ("#3b82f6", "#1e3a5f", "#60a5fa", "#3b82f6", "#e2e8f0"),
+    "prepaid":   ("#f59e0b", "#451a03", "#fbbf24", "#f59e0b", "#fbbf24"),
     "pass1":     ("#4ade80", "#14291a", "#4ade80", "#4ade80", "#4ade80"),
     "pass2":     ("#fb923c", "#2a1500", "#fb923c", "#fb923c", "#fb923c"),
     "minecraft": ("#22c55e", "#14291a", "#4ade80", "#22c55e", "#4ade80"),
@@ -30,6 +31,7 @@ _STATUS_STYLE = {
 _BADGE_TEXT = {
     "slobodno":  "SLOBODNO",
     "u_radu":    "U RADU",
+    "prepaid":   "PREPAID",
     "pass1":     "PASS 1",
     "pass2":     "PASS 2",
     "minecraft": "MINECRAFT",
@@ -41,7 +43,7 @@ def _tip_to_kljuc(tip_uredjaja: str, session_tip: Optional[str]) -> str:
         return "slobodno"
     mapa = {
         "neograniceno": "ps5" if tip_uredjaja == "PS5" else "u_radu",
-        "prepaid":      "u_radu",
+        "prepaid":      "prepaid",
         "pass1":        "pass1",
         "pass2":        "pass2",
         "minecraft":    "minecraft",
@@ -57,6 +59,8 @@ class UredjajKartica(QWidget):
         └── QFrame#statusBar   — 3px colored bar, outside the rounded rect
     """
     pazar_changed = Signal()
+    session_changed = Signal(str)
+    dodaj_artikal_requested = Signal(str)
 
     def __init__(
         self,
@@ -67,19 +71,24 @@ class UredjajKartica(QWidget):
         get_sve_uredjaje: Callable,
         parent=None,
         uredjaj_id: Optional[int] = None,
+        grupa: Optional[str] = None,
     ):
         super().__init__(parent)
-        self.setFixedWidth(160)
+        self.setObjectName("deviceCardWrapper")
+        self.setFixedWidth(184)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         self.ime = ime
         self.uredjaj_id = uredjaj_id
         self.tip = tip.upper()
         self.cena = cena
+        self.grupa = grupa or self.tip
         self.state = state
         self.get_sve_uredjaje = get_sve_uredjaje
 
         self.session: Optional[SessionState] = None
         self.kosarica: list = []
+        self.naredna_rezervacija = None
 
         # ── Outer layout ──────────────────────────────────────
         outer = QVBoxLayout(self)
@@ -114,6 +123,11 @@ class UredjajKartica(QWidget):
         lbl_name.setObjectName("cardName")
         lbl_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
         root.addWidget(lbl_name)
+
+        self._lbl_meta = QLabel(f"{self.grupa} · {self.cena:.2f} KM/h")
+        self._lbl_meta.setObjectName("cardMeta")
+        self._lbl_meta.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        root.addWidget(self._lbl_meta)
 
         self._lbl_badge = QLabel("SLOBODNO")
         self._lbl_badge.setObjectName("badge")
@@ -169,11 +183,29 @@ class UredjajKartica(QWidget):
         btn_row.addWidget(self._btn_naplati)
         root.addLayout(btn_row)
 
-        self._btn_prebaci = QPushButton("↔ PREBACI")
+        akcije = QHBoxLayout()
+        akcije.setSpacing(4)
+        self._btn_prebaci = QPushButton("PREBACI")
         self._btn_prebaci.setObjectName("btnPrebaci")
         self._btn_prebaci.clicked.connect(self.prebaci)
         self._btn_prebaci.hide()
-        root.addWidget(self._btn_prebaci)
+        akcije.addWidget(self._btn_prebaci, 1)
+
+        self._btn_vise = QToolButton()
+        self._btn_vise.setObjectName("btnCardMore")
+        self._btn_vise.setText("⋯")
+        self._btn_vise.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self._meni_akcija = QMenu(self._btn_vise)
+        self._akcija_dodaj = self._meni_akcija.addAction("Dodaj artikal")
+        self._akcija_dodaj.triggered.connect(
+            lambda: self.dodaj_artikal_requested.emit(self.ime)
+        )
+        self._akcija_detalji = self._meni_akcija.addAction("Detalji sesije")
+        self._akcija_detalji.triggered.connect(self._prikazi_detalje)
+        self._btn_vise.setMenu(self._meni_akcija)
+        self._btn_vise.hide()
+        akcije.addWidget(self._btn_vise)
+        root.addLayout(akcije)
 
     # ── Refresh ────────────────────────────────────────────────
 
@@ -182,16 +214,19 @@ class UredjajKartica(QWidget):
 
         if self.session is None:
             self._apply_style("slobodno", _STATUS_STYLE["slobodno"])
-            self._lbl_earning.setText("--")
-            self._lbl_timer.setText("--:--")
+            self._lbl_earning.setText("")
+            self._lbl_timer.setText("")
             self._lbl_timer.setObjectName("cardTimer")
             self._lbl_timer.style().unpolish(self._lbl_timer)
             self._lbl_timer.style().polish(self._lbl_timer)
             self._lbl_kosarica.setText("")
             self._progress.hide()
+            self._btn_start.show()
             self._btn_start.setEnabled(smjena_ok)
+            self._btn_naplati.hide()
             self._btn_naplati.setEnabled(False)
             self._btn_prebaci.hide()
+            self._btn_vise.hide()
             return
 
         tip = self.session.tip
@@ -199,7 +234,7 @@ class UredjajKartica(QWidget):
         self._apply_style(kljuc, _STATUS_STYLE.get(kljuc, _STATUS_STYLE["u_radu"]))
 
         timer_txt = self.session.formatiraj_timer()
-        self._lbl_timer.setText(timer_txt)
+        self._lbl_timer.setText(f"Vrijeme: {timer_txt}")
         self._lbl_timer.setObjectName("cardTimerActive")
         self._lbl_timer.style().unpolish(self._lbl_timer)
         self._lbl_timer.style().polish(self._lbl_timer)
@@ -207,14 +242,16 @@ class UredjajKartica(QWidget):
         if tip in ("neograniceno", "minecraft"):
             rate = CIJENA_MINECRAFT if tip == "minecraft" else self.cena
             iznos = self.session.elapsed_sekundi() / 3600 * rate
-            self._lbl_earning.setText(f"{iznos:.2f} KM")
-        elif tip in ("prepaid", "pass1"):
+            self._lbl_earning.setText(f"Iznos: {iznos:.2f} KM")
+        elif self.session.limit_sekundi is not None:
             preostalo = self.session.formatiraj_preostalo()
-            self._lbl_earning.setText(f"⏳ {preostalo}" if preostalo else "--")
+            self._lbl_earning.setText(
+                f"Preostalo: {preostalo}" if preostalo else "Preostalo: 00:00"
+            )
         else:
-            self._lbl_earning.setText("")
+            self._lbl_earning.setText("Vrijeme uključeno")
 
-        if tip in ("prepaid", "pass1"):
+        if self.session.limit_sekundi is not None:
             self._progress.show()
             self._progress.setValue(int(self.session.progres_prepaid() * 1000))
         else:
@@ -222,19 +259,34 @@ class UredjajKartica(QWidget):
 
         if self.kosarica:
             total = sum(a.ukupno() for a in self.kosarica)
-            self._lbl_kosarica.setText(f"🛒 {len(self.kosarica)} × {total:.2f} KM")
+            kolicina = sum(a.kolicina for a in self.kosarica)
+            self._lbl_kosarica.setText(
+                f"Artikli: {kolicina} · {total:.2f} KM"
+            )
         else:
-            self._lbl_kosarica.setText("")
+            self._lbl_kosarica.setText("Artikli: 0")
 
+        self._btn_start.hide()
         self._btn_start.setEnabled(False)
+        self._btn_naplati.show()
         self._btn_naplati.setEnabled(smjena_ok)
         self._btn_prebaci.setVisible(True)
         self._btn_prebaci.setEnabled(smjena_ok)
+        self._btn_vise.setVisible(True)
+        self._btn_vise.setEnabled(smjena_ok)
 
         if self.session.je_istekao():
-            self._lbl_badge.setText("⚠ ISTEKLO!")
+            self._lbl_badge.setText("⚠ ISTEKLO")
             self._lbl_badge.setStyleSheet(
                 "background: #7f1d1d; color: #f87171; border-radius: 8px; padding: 2px 8px;"
+            )
+        elif (
+            self.session.limit_sekundi is not None
+            and self.session.preostalo_sekundi() <= 10 * 60
+        ):
+            self._lbl_badge.setText(f"⚠ {tip.upper()} · USKORO")
+            self._lbl_badge.setStyleSheet(
+                "background: #451a03; color: #fbbf24; border-radius: 8px; padding: 2px 8px;"
             )
 
     def _apply_style(self, kljuc: str, style: tuple):
@@ -250,15 +302,36 @@ class UredjajKartica(QWidget):
         self._lbl_earning.setStyleSheet(f"color: {earn_c};")
 
     def postavi_narednu_rezervaciju(self, rezervacija) -> None:
+        self.naredna_rezervacija = rezervacija
         if rezervacija is None:
             self._lbl_rezervacija.clear()
             self._lbl_rezervacija.hide()
             return
         pocetak = datetime.fromisoformat(rezervacija["pocetak"])
         self._lbl_rezervacija.setText(
-            f"Rezervacija {pocetak:%H:%M} — {rezervacija['ime_gosta']}"
+            f"REZ {pocetak:%H:%M} • {rezervacija['ime_gosta']}"
+        )
+        minuta = int((pocetak - datetime.now()).total_seconds() // 60)
+        boja = "#fbbf24" if minuta <= 30 else "#64748b"
+        self._lbl_rezervacija.setStyleSheet(
+            f"color: {boja}; font-size: 10px; font-weight: 600;"
         )
         self._lbl_rezervacija.show()
+
+    def _prikazi_detalje(self):
+        if self.session is None:
+            return
+        preostalo = self.session.formatiraj_preostalo()
+        artikli = sum(a.kolicina for a in self.kosarica)
+        redovi = [
+            f"Uređaj: {self.ime}",
+            f"Tip sesije: {self.session.tip}",
+            f"Trajanje: {self.session.formatiraj_timer()}",
+        ]
+        if preostalo:
+            redovi.append(f"Preostalo: {preostalo}")
+        redovi.append(f"Artikli: {artikli}")
+        QMessageBox.information(self.window(), "Detalji sesije", "\n".join(redovi))
 
     def _potvrdi_start_uz_rezervaciju(self, rezultat: dict) -> bool:
         if self.uredjaj_id is None:
@@ -316,18 +389,21 @@ class UredjajKartica(QWidget):
         )
 
         smjena_id = self.state.trenutna_smjena_id
-        radnik = self.state.ime_radnika
+        actor = self.state.trenutni_korisnik()
         iznos_starta = rezultat.get("iznos", 0.0)
 
         from services.pazar import start_sesija
-        start_sesija(self.ime, nova_sesija, smjena_id, iznos_starta)
+        start_sesija(
+            self.ime, nova_sesija, smjena_id, iznos_starta, actor=actor
+        )
 
         self.session = nova_sesija
         self.kosarica = []
         self.pazar_changed.emit()
+        signal = getattr(self, "session_changed", None)
+        if signal is not None:
+            signal.emit(self.ime)
 
-        from services.logger import upisi_log
-        upisi_log(smjena_id, radnik, self.ime, f"START — {tip.upper()}")
         self.osvjezi()
 
     def naplati(self):
@@ -338,18 +414,18 @@ class UredjajKartica(QWidget):
             return
 
         smjena_id = self.state.trenutna_smjena_id
-        radnik = self.state.ime_radnika
+        actor = self.state.trenutni_korisnik()
 
         from services.pazar import naplati_uredjaj
-        iznos = naplati_uredjaj(self.ime, self.session, self.kosarica, self.cena, smjena_id)
-
-        from services.logger import upisi_log
-        upisi_log(smjena_id, radnik, self.ime,
-                  f"NAPLATA — {self.session.tip.upper()} — {iznos:.2f} KM")
+        iznos = naplati_uredjaj(
+            self.ime, self.session, self.kosarica, self.cena, smjena_id,
+            actor=actor,
+        )
 
         self.session = None
         self.kosarica = []
         self.pazar_changed.emit()
+        self.session_changed.emit(self.ime)
         self.osvjezi()
 
     def prebaci(self):
@@ -375,10 +451,12 @@ class UredjajKartica(QWidget):
         nova_kosarica = deepcopy(self.kosarica)
 
         smjena_id = self.state.trenutna_smjena_id
-        radnik = self.state.ime_radnika
+        actor = self.state.trenutni_korisnik()
         from services.pazar import prebaci_sesiju_na_uredjaj
         try:
-            prebaci_sesiju_na_uredjaj(smjena_id, radnik, self.ime, cilj.ime)
+            prebaci_sesiju_na_uredjaj(
+                smjena_id, self.ime, cilj.ime, actor=actor
+            )
         except Exception as e:
             QMessageBox.critical(
                 self.window(), "Greška",
@@ -394,6 +472,8 @@ class UredjajKartica(QWidget):
         self.osvjezi()
         cilj.osvjezi()
         self.pazar_changed.emit()
+        self.session_changed.emit(self.ime)
+        cilj.session_changed.emit(cilj.ime)
 
     def dodaj_u_kosaricu(self, artikal: Artikal):
         for a in self.kosarica:
@@ -407,7 +487,11 @@ class UredjajKartica(QWidget):
         smjena_id = self.state.trenutna_smjena_id
         from services.pazar import dodaj_artikal_na_uredjaj
         dodaj_artikal_na_uredjaj(smjena_id, self.ime, artikal.naziv,
-                                  artikal.kolicina, artikal.cijena)
+                                  artikal.kolicina, artikal.cijena,
+                                  actor=self.state.trenutni_korisnik())
+        signal = getattr(self, "session_changed", None)
+        if signal is not None:
+            signal.emit(self.ime)
 
 
 class _IzborUredjajaDlg(QDialog):

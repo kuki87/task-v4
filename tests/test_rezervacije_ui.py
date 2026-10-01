@@ -8,8 +8,12 @@ from PySide6.QtWidgets import QDialog, QMessageBox
 import services.rezervacije as rezervacije_service
 import ui.rezervacije as rezervacije_ui
 from models.app_state import AppState
+from models.user import UserIdentity
 from ui.kartica_uredjaja import UredjajKartica
 from ui.rezervacije import RezervacijaFormaDijalog, RezervacijeDijalog
+
+
+TEST_ACTOR = UserIdentity(1, "tester", "Tester", "admin")
 
 
 def _red(rezervacija_id=1, *, status="rezervisano", gost="Marko", uredjaj="PC1"):
@@ -68,7 +72,7 @@ def ui_servisi(monkeypatch):
 
 def _dijalog(qtbot, ui_servisi):
     dijalog = RezervacijeDijalog(
-        radnik_getter=lambda: "Tester", smjena_id_getter=lambda: 7
+        actor_getter=lambda: TEST_ACTOR, smjena_id_getter=lambda: 7
     )
     qtbot.addWidget(dijalog)
     return dijalog
@@ -184,7 +188,7 @@ def test_nova_rezervacija_poziva_servis_i_emitira_signal(
     monkeypatch.setattr(rezervacije_ui, "RezervacijaFormaDijalog", _PrihvacenaForma)
     with qtbot.waitSignal(dijalog.rezervacije_changed, timeout=1000):
         dijalog._nova()
-    assert kreiraj_mock.call_args.kwargs["radnik"] == "Tester"
+    assert kreiraj_mock.call_args.kwargs["actor"] == TEST_ACTOR
     assert kreiraj_mock.call_args.kwargs["smjena_id"] == 7
 
 
@@ -206,7 +210,7 @@ def test_izmjena_poziva_servis(qtbot, ui_servisi, monkeypatch):
     monkeypatch.setattr(rezervacije_ui, "RezervacijaFormaDijalog", _PrihvacenaForma)
     dijalog._izmijeni()
     assert izmijeni_mock.call_args.args[0] == 1
-    assert izmijeni_mock.call_args.kwargs["radnik"] == "Tester"
+    assert izmijeni_mock.call_args.kwargs["actor"] == TEST_ACTOR
 
 
 @pytest.mark.parametrize(
@@ -217,7 +221,7 @@ def test_statusne_akcije_pozivaju_servis(qtbot, ui_servisi, status):
     dijalog = _dijalog(qtbot, ui_servisi)
     dijalog.tabela.selectRow(0)
     dijalog._promijeni_status(status)
-    status_mock.assert_called_with(1, status, "Tester", 7)
+    status_mock.assert_called_with(1, status, TEST_ACTOR, 7)
 
 
 def test_zavrsetak_stigle_rezervacije(qtbot, ui_servisi):
@@ -227,7 +231,7 @@ def test_zavrsetak_stigle_rezervacije(qtbot, ui_servisi):
     dijalog.tabela.selectRow(0)
     assert dijalog.btn_zavrsi.isEnabled()
     dijalog._promijeni_status("zavrseno")
-    status_mock.assert_called_with(1, "zavrseno", "Tester", 7)
+    status_mock.assert_called_with(1, "zavrseno", TEST_ACTOR, 7)
 
 
 def test_kartica_prikazuje_najblizu_rezervaciju(qtbot):

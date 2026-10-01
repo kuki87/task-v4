@@ -10,6 +10,7 @@ PBKDF2_ITERACIJE = 600_000
 PBKDF2_SALT_BAJTOVA = 16
 PBKDF2_VERZIJA = "v1"
 PBKDF2_OZNAKA = "pbkdf2_sha256"
+MIN_DUZINA_LOZINKE = 4
 
 AUTH_NEDOSTAJE = "nedostaje"
 AUTH_SPREMAN = "spreman"
@@ -33,6 +34,24 @@ def _napravi_pbkdf2_zapis(lozinka: str) -> str:
         f"{PBKDF2_VERZIJA}${PBKDF2_OZNAKA}${PBKDF2_ITERACIJE}"
         f"${salt.hex()}${hash_bajtovi.hex()}"
     )
+
+
+def napravi_password_hash(lozinka: str) -> str:
+    if not isinstance(lozinka, str) or len(lozinka) < MIN_DUZINA_LOZINKE:
+        raise ValueError(
+            f"Lozinka mora imati najmanje {MIN_DUZINA_LOZINKE} znaka."
+        )
+    return _napravi_pbkdf2_zapis(lozinka)
+
+
+def provjeri_password_hash(lozinka: str, zapis: str) -> tuple[bool, bool]:
+    podaci = _procitaj_pbkdf2_zapis(zapis)
+    if podaci is None or not isinstance(lozinka, str):
+        return False, False
+    iteracije, salt, hash_pohranjen = podaci
+    hash_unesen = _pbkdf2_hash(lozinka, salt, iteracije)
+    ispravno = hmac.compare_digest(hash_unesen, hash_pohranjen)
+    return ispravno, ispravno and iteracije < PBKDF2_ITERACIJE
 
 
 def _procitaj_pbkdf2_zapis(zapis: str):
@@ -103,7 +122,7 @@ def stanje_admin_lozinke() -> str:
 
 
 def promijeni_lozinku(nova: str) -> bool:
-    if not isinstance(nova, str) or len(nova) < 4:
+    if not isinstance(nova, str) or len(nova) < MIN_DUZINA_LOZINKE:
         return False
 
     zapis = _napravi_pbkdf2_zapis(nova)
@@ -164,3 +183,29 @@ def provjeri_admin_lozinku(unesena: str) -> bool:
     if ima_hash or ima_salt:
         log.error("Oštećen legacy admin zapis u config tabeli (fali hash ili salt).")
     return False
+
+
+def provjeri_legacy_admin_lozinku(unesena: str) -> bool:
+    """Provjeri legacy credential bez rehasha ili izmjene config tabele."""
+    zapisi = _ucitaj_auth_zapise()
+    if _ADMIN_ZAPIS in zapisi:
+        if _LEGACY_HASH in zapisi or _LEGACY_SALT in zapisi:
+            return False
+        return provjeri_password_hash(unesena, zapisi[_ADMIN_ZAPIS])[0]
+    if _LEGACY_HASH in zapisi and _LEGACY_SALT in zapisi:
+        if not _legacy_zapis_ispravan(
+            zapisi[_LEGACY_HASH], zapisi[_LEGACY_SALT]
+        ):
+            return False
+        return hmac.compare_digest(
+            _legacy_hash_lozinke(unesena, zapisi[_LEGACY_SALT]),
+            zapisi[_LEGACY_HASH],
+        )
+    return False
+
+
+def obrisi_legacy_auth_u_transakciji(conn) -> None:
+    conn.execute(
+        "DELETE FROM config WHERE kljuc IN (?, ?, ?)",
+        (_ADMIN_ZAPIS, _LEGACY_HASH, _LEGACY_SALT),
+    )

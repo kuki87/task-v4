@@ -33,6 +33,65 @@ QFrame#topbar QPushButton:pressed{ background: #1e2433; }
 
 QFrame#topbar QLabel#statusLabel { color: #22c55e; font-size: 11px; font-weight: 500; }
 
+QFrame#topbar QLabel#appTitle {
+    color: #e2e8f0;
+    font-size: 15px;
+    font-weight: 700;
+}
+QFrame#topbar QLabel#topStatus { color: #94a3b8; font-size: 10px; }
+QFrame#topbar QLabel#topShift {
+    color: #60a5fa;
+    font-size: 10px;
+    font-weight: 600;
+}
+QFrame#topbar QLabel#topRevenue {
+    color: #fbbf24;
+    font-size: 12px;
+    font-weight: 700;
+}
+QFrame#topbar QPushButton#btnLogout {
+    border: 1px solid #334155;
+    color: #94a3b8;
+    padding: 6px 12px;
+}
+
+/* ── Glavna navigacija ─────────────────────────────────────────── */
+QFrame#navigationSidebar {
+    background-color: #080b10;
+    border-right: 1px solid #1e2433;
+}
+QFrame#navigationSidebar QLabel#navSection {
+    color: #475569;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 4px 7px;
+}
+QFrame#navigationSidebar QPushButton#navButton {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    text-align: left;
+    padding: 7px 9px;
+    font-size: 11px;
+}
+QFrame#navigationSidebar QPushButton#navButton:hover {
+    background: #111827;
+    color: #e2e8f0;
+}
+
+QFrame#alertBar {
+    background: #17130a;
+    border-top: 1px solid #451a03;
+}
+QFrame#alertBar QPushButton#alertButton {
+    background: transparent;
+    border: none;
+    color: #fbbf24;
+    text-align: left;
+    font-size: 10px;
+    padding: 3px 8px;
+}
+
 /* ── Filter sidebar ──────────────────────────────────────────── */
 QFrame#filterSidebar {
     background-color: #080b10;
@@ -92,6 +151,9 @@ QFrame#deviceCard {
     border-radius: 12px;
     border: none;
 }
+QWidget#deviceCardWrapper:focus QFrame#deviceCard {
+    border: 1px solid #60a5fa;
+}
 
 QFrame#statusBar {
     min-height: 3px;
@@ -103,7 +165,8 @@ QFrame#statusBar {
 
 QLabel#cardIcon    { color: #334155; font-size: 22px; }
 QLabel#cardName    { color: #94a3b8; font-size: 12px; font-weight: 600; }
-QLabel#cardEarning { color: #e2e8f0; font-size: 20px; font-weight: 500;
+QLabel#cardMeta    { color: #475569; font-size: 9px; }
+QLabel#cardEarning { color: #e2e8f0; font-size: 13px; font-weight: 600;
                      font-family: "Consolas", "Courier New", monospace; }
 QLabel#cardTimer   { color: #334155; font-size: 11px;
                      font-family: "Consolas", "Courier New", monospace; }
@@ -165,6 +228,17 @@ QPushButton#btnPrebaci {
 }
 QPushButton#btnPrebaci:hover    { background-color: #451a03; color: #fbbf24; }
 QPushButton#btnPrebaci:disabled { color: #1e2433; border-color: #1e2433; }
+
+QToolButton#btnCardMore {
+    background-color: transparent;
+    color: #64748b;
+    border: 1px solid #1e2433;
+    border-radius: 4px;
+    min-width: 28px;
+    max-width: 28px;
+    padding: 2px 0;
+}
+QToolButton#btnCardMore:hover { background-color: #1e2433; color: #e2e8f0; }
 
 /* ── Bocni panel ─────────────────────────────────────────────── */
 QFrame#bocniPanel {
